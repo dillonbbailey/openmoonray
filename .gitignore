@@ -37,6 +37,7 @@
 build
 building/docker
 build_env
+local-build/
 install
 release
 html

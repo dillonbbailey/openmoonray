@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Source this file; all added tools, libraries and caches live in this workspace.
+export MOONRAY_LOCAL_SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+export MOONRAY_SOURCE_ROOT="$(cd "$MOONRAY_LOCAL_SCRIPTS/../.." && pwd)"
+export MOONRAY_LOCAL_ROOT="${MOONRAY_LOCAL_ROOT:-$MOONRAY_SOURCE_ROOT/../local-build}"
+mkdir -p "$MOONRAY_LOCAL_ROOT"/{tools,downloads,logs,cache,tmp,sources,build,validation}
+export DEPS_ROOT="$MOONRAY_LOCAL_ROOT/deps"
+export MAMBA_ROOT_PREFIX="$MOONRAY_LOCAL_ROOT/cache/mamba"
+export XDG_CACHE_HOME="$MOONRAY_LOCAL_ROOT/cache"
+export XDG_CONFIG_HOME="$MOONRAY_LOCAL_ROOT/config"
+export XDG_DATA_HOME="$MOONRAY_LOCAL_ROOT/share"
+export __GL_SHADER_DISK_CACHE_PATH="$MOONRAY_LOCAL_ROOT/cache/nvidia"
+export CUDA_CACHE_PATH="$MOONRAY_LOCAL_ROOT/cache/cuda"
+export OPTIX_CACHE_PATH="$MOONRAY_LOCAL_ROOT/cache/optix"
+mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$CUDA_CACHE_PATH" \
+  "$OPTIX_CACHE_PATH" "$__GL_SHADER_DISK_CACHE_PATH"
+export PXR_USDVIEW_SUPPRESS_STATE_SAVING=1
+export PIP_CACHE_DIR="$MOONRAY_LOCAL_ROOT/cache/pip"
+export UV_CACHE_DIR="$MOONRAY_LOCAL_ROOT/cache/uv"
+export TMPDIR="$MOONRAY_LOCAL_ROOT/tmp"
+export PYTHONNOUSERSITE=1
+export PATH="$DEPS_ROOT/bin:/usr/bin:/bin"
+export LD_LIBRARY_PATH="$DEPS_ROOT/lib"
+export CMAKE_PREFIX_PATH="$DEPS_ROOT"
+export PKG_CONFIG_PATH="$DEPS_ROOT/lib/pkgconfig:$DEPS_ROOT/share/pkgconfig"
+export CC="$DEPS_ROOT/bin/x86_64-conda-linux-gnu-gcc"
+export CXX="$DEPS_ROOT/bin/x86_64-conda-linux-gnu-g++"
+export ISPC="$DEPS_ROOT/bin/ispc"
+export PYTHONPATH="$DEPS_ROOT/lib/python:$DEPS_ROOT/lib/python3.10/site-packages"
+export QT_PLUGIN_PATH="$DEPS_ROOT/plugins"
+export Boost_ROOT="$DEPS_ROOT" TBB_ROOT="$DEPS_ROOT" LUA_DIR="$DEPS_ROOT"
+export Libuuid_ROOT="$DEPS_ROOT" CppUnit_ROOT="$DEPS_ROOT" JsonCpp_ROOT="$DEPS_ROOT"
+export Libcurl_ROOT="$DEPS_ROOT" Log4cplus_ROOT="$DEPS_ROOT" OpenSubDiv_ROOT="$DEPS_ROOT"
+export OpenVDB_ROOT="$DEPS_ROOT" Random123_ROOT="$DEPS_ROOT" ZLIB_ROOT="$DEPS_ROOT"
+export OPTIX_ROOT="$DEPS_ROOT" PXR_USD_LOCATION="$DEPS_ROOT" PXR_INCLUDE_DIRS="$DEPS_ROOT/include"
