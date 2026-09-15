@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+source "$(dirname "${BASH_SOURCE[0]}")/env-usd25.sh"
+export PATH="$MOONRAY_USD25_ROOT/install/bin:$PATH"
+export PYTHONPATH="$MOONRAY_USD25_ROOT/install/python/lib/python3.10:$MOONRAY_USD25_ROOT/install/python/render_profile_viewer:$PYTHONPATH"
+export LD_LIBRARY_PATH="$MOONRAY_USD25_ROOT/install/lib:$LD_LIBRARY_PATH:$DEPS_ROOT/targets/x86_64-linux/lib"
+export RDL2_DSO_PATH="$MOONRAY_USD25_ROOT/install/rdl2dso"
+export REZ_MOONRAY_ROOT="$MOONRAY_USD25_ROOT/install"
+export ARRAS_SESSION_PATH="$MOONRAY_USD25_ROOT/install/sessions"
+export MOONRAY_CLASS_PATH="$MOONRAY_USD25_ROOT/install/shader_json"
+export PXR_PLUGINPATH_NAME="$MOONRAY_USD25_ROOT/install/plugin/pxr:$USD25_ROOT/lib/usd"

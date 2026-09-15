@@ -4,6 +4,7 @@ export MOONRAY_LOCAL_SCRIPTS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export MOONRAY_SOURCE_ROOT="$(cd "$MOONRAY_LOCAL_SCRIPTS/../.." && pwd)"
 export MOONRAY_LOCAL_ROOT="${MOONRAY_LOCAL_ROOT:-$MOONRAY_SOURCE_ROOT/../local-build}"
 mkdir -p "$MOONRAY_LOCAL_ROOT"/{tools,downloads,logs,cache,tmp,sources,build,validation}
+export MOONRAY_LOCAL_ROOT="$(cd "$MOONRAY_LOCAL_ROOT" && pwd)"
 export DEPS_ROOT="$MOONRAY_LOCAL_ROOT/deps"
 export MAMBA_ROOT_PREFIX="$MOONRAY_LOCAL_ROOT/cache/mamba"
 export XDG_CACHE_HOME="$MOONRAY_LOCAL_ROOT/cache"

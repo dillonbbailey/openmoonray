@@ -132,3 +132,45 @@ Remaining upstream warnings observed during successful rendering:
 - `moonray_gui_v2` prints GLFW invalid-key warnings; key handling was not audited.
 - No OCIO display configuration is selected by default; set `OCIO` to a desired
   configuration to enable the GUIs' display color management.
+
+## OpenUSD 25.08 overlay
+
+After completing the base local dependency build, build USD 25.08 and a separate
+MoonRay installation:
+
+```bash
+bash building/Ubuntu24Local/build-usd25.sh
+bash building/Ubuntu24Local/build-moonray-usd25.sh
+source building/Ubuntu24Local/setup-usd25.sh
+python -c 'from pxr import Usd; print(Usd.GetVersion())'
+usdview --renderer Moonray testdata/sphere.usd
+```
+
+The overlay defaults to `$MOONRAY_LOCAL_ROOT/usd25` (override with
+`MOONRAY_USD25_ROOT`). It contains USD, MoonRay, source downloads and build trees.
+It reuses the existing workspace-local compiler, Python 3.10, PySide2, TBB,
+rendering libraries, CUDA and OptiX from `local-build/deps`. It does not install
+into that prefix or replace the USD 23.08/MoonRay installation. Source the
+original `setup.sh` to select the original installation again.
+
+USD 25.08 enables Python, tools, OpenGL imaging and usdview. Vulkan is disabled;
+it is not required for MoonRay's CUDA/OptiX XPU support. The local USD patch
+makes its exported TBB target coexist with MoonRay's dependency discovery.
+The CMake include-order hook ensures the new USD headers precede the old ones
+in the shared dependency prefix. MoonRay's shader plugins select Sdr for
+25.08 and retain Ndr support for older USD versions.
+
+Validated locally on Ubuntu 24.04 with an RTX PRO 6000 Blackwell:
+
+- Complete MoonRay build with OpenUSD 25.08, Python, usdview and XPU enabled.
+- Native CPU/XPU and Hydra CPU/XPU renders; GPU logs confirm intersection
+  and occlusion work on the GPU.
+- The real usdview window rendered with both Storm and MoonRay.
+- Runtime checks loaded only USD libraries from the new installation.
+- The shader plugins also compiled against USD 23.08. Existing shader metadata
+  and missing shader-plugin Python-module warnings remain nonblocking for the
+  tested scenes.
+
+This is a standalone USD upgrade. Blender 5.1.2 uses its own USD namespace,
+Python 3.13, and different dependency versions, so this overlay is not yet a
+Blender-loadable delegate.

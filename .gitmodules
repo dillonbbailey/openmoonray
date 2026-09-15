@@ -60,8 +60,8 @@
 	branch = main
 [submodule "moonray/hydra/moonray_sdr_plugins"]
 	path = moonray/hydra/moonray_sdr_plugins
-	url = https://github.com/OpenMoonRay/moonray_sdr_plugins.git
-	branch = main
+	url = https://github.com/dillonbbailey/moonray_sdr_plugins.git
+	branch = ubuntu24-local-usdview-xpu
 [submodule "moonray/moonray_dcc_plugins"]
 	path = moonray/moonray_dcc_plugins
 	url = https://github.com/OpenMoonRay/moonray_dcc_plugins.git

@@ -1,0 +1,7 @@
+--- a/pxr/pxrConfig.cmake.in
++++ b/pxr/pxrConfig.cmake.in
+@@ -56,3 +56,3 @@
+     find_dependency(TBB @TBB_VERSION@ CONFIG)
+-else()
++elseif (NOT TARGET TBB::tbb)
+     add_library(TBB::tbb SHARED IMPORTED)
