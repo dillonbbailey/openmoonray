@@ -51,6 +51,50 @@
             }
         },
         {
+            "name": "macos-local-environment",
+            "hidden": true,
+            "description": "Workspace-local build. Every path is taken from the environment set up by building/macOSLocal/env.sh, so nothing is read from or written to a system location.",
+            "environment": {
+                "DEPS_ROOT"                     : "$penv{DEPS_ROOT}",
+                "BUILD_DIR"                     : "$penv{BUILD_DIR}",
+                "Boost_ROOT"                    : "$env{DEPS_ROOT}",
+                "Libuuid_ROOT"                  : "$env{DEPS_ROOT}",
+                "CppUnit_ROOT"                  : "$env{DEPS_ROOT}",
+                "ISPC"                          : "$env{DEPS_ROOT}/bin/ispc",
+                "JsonCpp_ROOT"                  : "$env{DEPS_ROOT}",
+                "Libcurl_ROOT"                  : "$env{DEPS_ROOT}",
+                "Log4cplus_ROOT"                : "$env{DEPS_ROOT}",
+                "LUA_DIR"                       : "$env{DEPS_ROOT}",
+                "OpenSubDiv_ROOT"               : "$env{DEPS_ROOT}",
+                "OpenVDB_ROOT"                  : "$env{DEPS_ROOT}",
+                "OPTIX_ROOT"                    : "$env{DEPS_ROOT}/optix",
+                "PXR_USD_LOCATION"              : "$env{DEPS_ROOT}",
+                "PXR_INCLUDE_DIRS"              : "$env{DEPS_ROOT}/include",
+                "Random123_ROOT"                : "$env{DEPS_ROOT}",
+                "ZLIB_ROOT"                     : "$env{DEPS_ROOT}",
+                "OIIO_PYTHON"                   : "$env{DEPS_ROOT}/lib/python3.9/site-packages"
+            },
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "$env{DEPS_ROOT}",
+                "CMAKE_CXX_FLAGS": "-D_LIBCPP_ENABLE_CXX17_REMOVED_UNARY_BINARY_FUNCTION",
+                "CMAKE_IGNORE_PATH": "/opt/homebrew",
+                "CMAKE_IGNORE_PREFIX_PATH": "/opt/homebrew",
+                "CMAKE_POLICY_VERSION_MINIMUM": "3.5",
+                "Python_EXECUTABLE": "$penv{MOONRAY_PYTHON}"
+            }
+        },
+        {
+            "name": "macos-local-release",
+            "displayName": "macOS Release (workspace-local, usdview)",
+            "inherits": "macos-local-environment",
+            "binaryDir": "$env{BUILD_DIR}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_INSTALL_PREFIX": "$penv{INSTALL_DIR}"
+            },
+            "generator": "Xcode"
+        },
+        {
             "name": "macos-release",
             "displayName": "macOS Release",
             "inherits": "macos-environment",
@@ -74,6 +118,13 @@
         }
     ],
     "buildPresets": [
+        {
+            "name": "macos-local-release",
+            "displayName": "macOS Release (workspace-local, usdview)",
+            "configurePreset": "macos-local-release",
+            "configuration": "Release",
+            "targets": ["install"]
+        },
         {
             "name": "macos-release",
             "displayName": "macOS Release",

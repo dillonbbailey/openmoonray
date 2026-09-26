@@ -65,3 +65,6 @@ moonray/moonray_tools
 
 # gha created files
 .ci_githooks
+
+# Workspace-local build output (building/macOSLocal)
+local-build/
