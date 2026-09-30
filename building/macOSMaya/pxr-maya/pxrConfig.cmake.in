@@ -1,0 +1,158 @@
+# - Configuration file for the pxr project
+# Defines the following variables:
+# PXR_MAJOR_VERSION - Major version number.
+# PXR_MINOR_VERSION - Minor version number.
+# PXR_PATCH_VERSION - Patch version number.
+# PXR_VERSION       - Complete pxr version string.
+# PXR_INCLUDE_DIRS  - Root include directory for the installed project.
+# PXR_LIBRARIES     - List of all libraries, by target name.
+# PXR_foo_LIBRARY   - Absolute path to individual libraries.
+# The preprocessor definition PXR_STATIC will be defined if appropriate
+
+get_filename_component(PXR_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+
+set(PXR_MAJOR_VERSION "0")
+set(PXR_MINOR_VERSION "25")
+set(PXR_PATCH_VERSION "11")
+set(PXR_VERSION "2511")
+
+include(CMakeFindDependencyMacro)
+
+# --- MoonRay macOSMaya shim ------------------------------------------------
+# Patched copy of MayaUSD 0.37.0's pxrConfig.cmake (USD 25.11), generated into
+# $PXR_SHIM by unpack-usd-devkit.sh. Changes from the original are marked
+# "MoonRay:". See building/macOSMaya/PLAN.md section 4.
+#
+# MoonRay: default the Maya locations so consumers need not pass them.
+if (NOT DEFINED PXR_USD_LOCATION)
+    set(PXR_USD_LOCATION "@MAYA_USD@")
+endif()
+if (NOT DEFINED MAYA_LOCATION)
+    set(MAYA_LOCATION "@MAYA_LOCATION@")
+endif()
+# MoonRay: MaterialX and Imath are unused by hdMoonray; skip them by default so
+# their include dirs are not dragged in.
+option(PXR_FIND_MATERIALX "Find MaterialX from pxrConfig.cmake" OFF)
+option(PXR_FIND_IMATH "Find Imath from pxrConfig.cmake" OFF)
+# ---------------------------------------------------------------------------
+
+# If Python support was enabled for this USD build, find the import
+# targets by invoking the appropriate FindPython module. Use the same
+# LIBRARY and INCLUDE_DIR settings from the original build if they
+# were set. This can be overridden by specifying different values when
+# running cmake.
+if(ON)
+    if (NOT DEFINED Python3_EXECUTABLE)
+        if (NOT "${MAYA_LOCATION}/Maya.app/Contents/bin/mayapy" STREQUAL "")
+            set(Python3_EXECUTABLE "${MAYA_LOCATION}/Maya.app/Contents/bin/mayapy")
+        endif()
+    endif()
+
+    if (NOT DEFINED Python3_LIBRARY)
+        if (NOT "${MAYA_LOCATION}/Maya.app/Contents/Frameworks/Python.framework/Versions/Current/lib/libpython3.13.dylib" STREQUAL "")
+            set(Python3_LIBRARY "${MAYA_LOCATION}/Maya.app/Contents/Frameworks/Python.framework/Versions/Current/lib/libpython3.13.dylib")
+        endif()
+    endif()
+
+    if (NOT DEFINED Python3_INCLUDE_DIR)
+        if (NOT "${MAYA_LOCATION}/Maya.app/Contents/Frameworks/Python.framework/Versions/Current/include/python3.13" STREQUAL "")
+            set(Python3_INCLUDE_DIR "${MAYA_LOCATION}/Maya.app/Contents/Frameworks/Python.framework/Versions/Current/include/python3.13")
+        endif()
+    endif()
+
+    if (NOT DEFINED Python3_VERSION)
+        find_dependency(Python3 "3.13.9" EXACT COMPONENTS Development)
+    else()
+        find_dependency(Python3 COMPONENTS Development)
+    endif()
+endif()
+
+if (NOT DEFINED PXR_FIND_TBB_IN_CONFIG)
+    set(PXR_FIND_TBB_IN_CONFIG "OFF")
+endif()
+if (PXR_FIND_TBB_IN_CONFIG)
+    find_dependency(TBB 2022.0 CONFIG)
+elseif(NOT TARGET TBB::tbb)
+    # MoonRay: guarded. If TBB::tbb already exists (MoonRay's FindTBB, bound to
+    # deps TBB 2020.3) keep it rather than failing on a duplicate target.
+    add_library(TBB::tbb SHARED IMPORTED)
+
+    macro(_add_property name value)
+        if (NOT "${value}" STREQUAL "")
+            set_target_properties(TBB::tbb PROPERTIES ${name} "${value}")
+        endif()
+    endmacro()
+
+    _add_property(INTERFACE_INCLUDE_DIRECTORIES "${PXR_USD_LOCATION}/include")
+    _add_property(INTERFACE_COMPILE_DEFINITIONS "")
+    _add_property(INTERFACE_LINK_DIRECTORIES "${PXR_USD_LOCATION}/lib")
+    _add_property(IMPORTED_IMPLIB "")
+    _add_property(IMPORTED_LOCATION "${PXR_USD_LOCATION}/lib/libtbb.12.dylib")
+endif()
+
+if (NOT DEFINED PXR_FIND_OPENSUBDIV_IN_CONFIG)
+    set(PXR_FIND_OPENSUBDIV_IN_CONFIG "OFF")
+endif()
+if (PXR_FIND_OPENSUBDIV_IN_CONFIG)
+    find_dependency(OpenSubdiv  CONFIG)
+endif()
+
+# If MaterialX support was enabled for this USD build, try to find the
+# associated import targets by invoking the same FindMaterialX.cmake
+# module that was used for that build. This can be overridden by
+# specifying a different MaterialX_DIR when running cmake.
+if(PXR_FIND_MATERIALX)  # MoonRay: was if(ON)
+    if (NOT DEFINED MaterialX_DIR)
+        if (NOT "${PXR_USD_LOCATION}/lib/cmake/MaterialX" STREQUAL "")
+            set(MaterialX_DIR "${PXR_USD_LOCATION}/lib/cmake/MaterialX")
+        endif()
+    endif()
+    find_dependency(MaterialX)
+endif()
+
+# Similar to MaterialX above, we are using Imath's cmake package config, so set
+# the Imath_DIR accordingly to find the associated import targets which were
+# used for this USD build. 
+# Note that we only need to do this, when it is determined by Imath is being
+# used instead of OpenExr (refer Packages.cmake)
+if(PXR_FIND_IMATH)  # MoonRay: was if(1)
+    if (NOT DEFINED Imath_DIR)
+        if (NOT "${PXR_USD_LOCATION}/lib/cmake/Imath" STREQUAL "")
+            set(Imath_DIR "${PXR_USD_LOCATION}/lib/cmake/Imath")
+        endif()
+    endif()
+    find_dependency(Imath)
+endif()
+
+# If this build is using a custom work implementation, find the package
+# providing that implementation.
+if(NOT "" STREQUAL "")
+    if (NOT DEFINED )
+        if (NOT [[]] STREQUAL "")
+            set( [[]])
+        endif()
+    endif()
+    find_dependency()
+endif()
+
+include("${PXR_CMAKE_DIR}/cmake/pxrTargets.cmake")
+if (TARGET usd_m)
+    set(libs "usd_m")
+else()
+    set(libs "boost;python;arch;tf;gf;pegtl;js;trace;work;plug;vt;ts;ar;kind;sdf;sdr;pcp;usd;usdGeom;usdVol;usdMedia;usdShade;usdLux;usdProc;usdRender;usdHydra;usdRi;usdSemantics;usdSkel;usdUI;usdUtils;usdPhysics;usdMtlx;vdf;ef;esf;esfUsd;exec;execUsd;execGeom;usdValidation;usdGeomValidators;usdPhysicsValidators;usdShadeValidators;usdSkelValidators;usdUtilsValidators;garch;hf;hio;cameraUtil;pxOsd;geomUtil;glf;hgi;hgiGL;hgiMetal;hgiInterop;hd;hdar;hdGp;hdsi;hdMtlx;hdSt;hdx;usdImaging;usdImagingGL;usdProcImaging;usdRiPxrImaging;usdSkelImaging;usdVolImaging;usdAppUtils;usdviewq;usdBakeMtlx")
+endif()
+set(PXR_LIBRARIES "")
+set(PXR_INCLUDE_DIRS "${PXR_CMAKE_DIR}/include")
+string(REPLACE " " ";" libs "${libs}")
+foreach(lib ${libs})
+    get_target_property(location ${lib} LOCATION)
+    set(PXR_${lib}_LIBRARY ${location})
+    list(APPEND PXR_LIBRARIES ${lib})
+endforeach()
+if(NOT ON)
+    if(WIN32)
+        list(APPEND PXR_LIBRARIES Shlwapi.lib)
+        list(APPEND PXR_LIBRARIES Dbghelp.lib)
+    endif()
+    add_definitions(-DPXR_STATIC)
+endif()

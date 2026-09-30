@@ -2,7 +2,8 @@
 
 Status: **verified draft.** Both Stage 0 gates from the first draft are now answered, and both
 came back favourable. One new top risk was found. The Rosetta question is resolved — Maya
-runs native arm64 (Risk 2). The remaining pre-code unknown is the TBB `sizeof` probe (Risk 1).
+runs native arm64 (Risk 2). **M0 is done** (2026-09-30): the TBB probe found diverging sizes
+but only one unsafe access, now patched (Risk 1 outcome). Next: M1.
 
 Target branch: `macos-local-usdview`, or a new `maya2027-hydra` branch off it.
 
@@ -104,6 +105,7 @@ openmoonray/building/macOSMaya/
 ├── README.md
 ├── env.sh                     sources ../macOSLocal/env.sh, adds MAYA_* / PXR_* vars
 ├── unpack-usd-devkit.sh       extract devkit.tgz; assemble the pxr shim dir
+├── tbb-probe/                 Risk 1 gate: layout diff, TBB 2020.3 vs oneTBB headers
 ├── build-delegate.sh          configure + build + install the delegate only
 ├── make-maya-module.sh        generate the Maya module tree
 ├── run-maya.sh                launch Maya with MAYA_MODULE_PATH + runtime env
@@ -323,6 +325,24 @@ Identical ⇒ risk collapses. Divergent ⇒ escalate.
 `usd-devkit/include/tbb`). The set is bounded, and scene_rdl2 looks oneTBB-clean —
 `task_scheduler_init` appears only in a test file, and there is no `tbb::atomic` or
 `tbb/task.h` usage.
+*Outcome (M0, 2026-09-30): sizes diverge, but the risk is contained — staying on TBB 2020.3.*
+`tbb-probe/tbb-probe.sh` found `HdChangeTracker` (3264 vs 3224), `HdRenderIndex`,
+`TfDiagnosticMgr`, `UsdImagingDelegate` and `UsdStage` differ. That only matters where the
+delegate's own compiled code reads their members, i.e. through **inline** accessors. Audit of
+`hdMoonray/lib`:
+- `HdRenderIndex::GetChangeTracker()` (inline, 6 call sites): `_tracker` is at offset **440
+  under both** — the whole size delta is inside the tracker. Every tracker method called on
+  it (`MarkRprimDirty`, `MarkSprimDirty`, `MarkAllRprimsDirty`, `GetInstancerDirtyBits`,
+  `MarkInstancerClean`) is out of line. **Safe.**
+- Every other `HdRenderIndex` call is out of line. All 16 base classes hdMoonray derives from
+  are identical. **Safe.**
+- `UsdImagingDelegate::GetTime()` (inline, `RenderPass.cc`): `_time` is at **1120 vs 1152**.
+  **Real bug.** Patched to the out-of-line `GetTimeWithOffset(0.0f)` on hdMoonray branch
+  `maya2027-hydra`.
+
+The probe now gates on exactly those layouts ("must" lines) and passes. **Any new inline
+accessor on a TBB-holding USD type must be added to the probe.** `moonray_sdr_plugins` was
+not audited; it uses Sdr, not the divergent Hd/UsdImaging types.
 
 **Risk 2 — Maya running under Rosetta. RESOLVED ✅**
 Verified on a live Maya process (pid 1590): `lsappinfo` reports `LSArchitecture = arm64` and
@@ -372,10 +392,21 @@ Does not block M1–M3.
 shim. Run the TBB `sizeof` probe (Risk 1). Compile one throwaway TU that includes
 `pxr/imaging/hd/renderDelegate.h` **and** `scene_rdl2/scene/rdl2/SceneContext.h` together.
 *Exit: that TU compiles and links.*
+**✅ Done 2026-09-30.** `unpack-usd-devkit.sh` + `tbb-probe/tbb-probe.sh`. The probe TU
+compiles, links and runs a `TfToken` (oneTBB runtime) alongside a `SceneContext` (TBB 2020.3
+runtime) in one process. See Risk 1 outcome. Two things found for M1:
+- scene_rdl2's install omits `scene_rdl2/common/arm/` (`emulation.h`, `sse2neon.h`,
+  `avx2neon.h`), which `common/math/Math.h` includes on arm64. It belongs to no component, so
+  no `PUBLIC_HEADER` rule installs it. Fix the install; the probe borrows it from source.
+- Maya's `libpython3.13.dylib` has install name
+  `@executable_path/../Frameworks/Python.framework/Versions/3.13/Python`: fine inside Maya,
+  unresolvable anywhere else. Standalone tools need `DYLD_FRAMEWORK_PATH`.
 
-**M1 — Delegate builds against 25.11.** Merge the two `dillonbbailey` fork branches;
-superproject + preset in place. *Exit: `hd_moonray.dylib` exists; `otool -L` shows Maya's
-`libusd_*` only, no `libusd_ndr`, no `Python3.framework/3.9`, no `libboost_python39`, arm64.*
+**M1 — Delegate builds against 25.11.** hdMoonray: branch `maya2027-hydra` (fork's two
+commits + the `GetTime` fix; no merge needed, the fork branch is upstream `986121d` + 2).
+Merge the `moonray_sdr_plugins` fork branch; superproject + preset in place. *Exit:
+`hd_moonray.dylib` exists; `otool -L` shows Maya's `libusd_*` only, no `libusd_ndr`, no
+`Python3.framework/3.9`, no `libboost_python39`, arm64; `tbb-probe.sh` passes.*
 
 **M2 — 🎯 FIRST PROOF OF LIFE: "Moonray" in Maya's Hydra renderer menu.**
 Module tree + `.mod` + `run-maya.sh`. *Exit: a `mayaHydraRenderOverride_HdMoonrayRendererPlugin`
@@ -430,8 +461,7 @@ problem from a shading problem), and Maya's `MAYAHYDRALIB_RENDEROVERRIDE_*` `TF_
 4. **mayaHydra emulation vs hdMoonray's legacy scene-delegate assumptions** — unprovable
    before M3.
 
-The only remaining pre-code unknown is the **TBB `sizeof` probe** (Risk 1), which is the
-first task in M0.
+No pre-code unknowns remain: the TBB probe (Risk 1) ran in M0 and passes after one patch.
 
 ---
 
