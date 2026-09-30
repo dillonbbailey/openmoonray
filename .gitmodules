@@ -44,8 +44,8 @@
 	branch = main
 [submodule "moonray/hydra/hdMoonray"]
 	path = moonray/hydra/hdMoonray
-	url = https://github.com/OpenMoonRay/hdMoonray.git
-	branch = main
+	url = https://github.com/dillonbbailey/hdMoonray.git
+	branch = maya2027-hydra
 [submodule "arras/arras_render"]
 	path = arras/arras_render
 	url = https://github.com/OpenMoonRay/arras_render.git
@@ -60,8 +60,8 @@
 	branch = main
 [submodule "moonray/hydra/moonray_sdr_plugins"]
 	path = moonray/hydra/moonray_sdr_plugins
-	url = https://github.com/OpenMoonRay/moonray_sdr_plugins.git
-	branch = main
+	url = https://github.com/dillonbbailey/moonray_sdr_plugins.git
+	branch = maya2027-hydra
 [submodule "moonray/moonray_dcc_plugins"]
 	path = moonray/moonray_dcc_plugins
 	url = https://github.com/OpenMoonRay/moonray_dcc_plugins.git
