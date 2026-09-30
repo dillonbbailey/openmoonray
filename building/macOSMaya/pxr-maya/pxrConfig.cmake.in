@@ -24,8 +24,12 @@ include(CMakeFindDependencyMacro)
 # "MoonRay:". See building/macOSMaya/PLAN.md section 4.
 #
 # MoonRay: default the Maya locations so consumers need not pass them.
+# PXR_USD_LOCATION is the shim itself, not Maya's USD dir: pxrTargets.cmake
+# uses it for both ${PXR_USD_LOCATION}/lib (symlinked to Maya's libs) and
+# ${PXR_USD_LOCATION}/include, which does not exist in Maya's USD dir (the
+# headers ship only in devkit.tgz) and must expose only pxr/.
 if (NOT DEFINED PXR_USD_LOCATION)
-    set(PXR_USD_LOCATION "@MAYA_USD@")
+    set(PXR_USD_LOCATION "${PXR_CMAKE_DIR}")
 endif()
 if (NOT DEFINED MAYA_LOCATION)
     set(MAYA_LOCATION "@MAYA_LOCATION@")

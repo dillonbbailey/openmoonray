@@ -2,8 +2,8 @@
 
 Status: **verified draft.** Both Stage 0 gates from the first draft are now answered, and both
 came back favourable. One new top risk was found. The Rosetta question is resolved — Maya
-runs native arm64 (Risk 2). **M0 is done** (2026-09-30): the TBB probe found diverging sizes
-but only one unsafe access, now patched (Risk 1 outcome). Next: M1.
+runs native arm64 (Risk 2). **M0 and M1 are done** (2026-09-30): the delegate builds against
+Maya's USD 25.11 and loads in `mayapy` with the right library copies. Next: M2.
 
 Target branch: `macos-local-usdview`, or a new `maya2027-hydra` branch off it.
 
@@ -107,12 +107,13 @@ openmoonray/building/macOSMaya/
 ├── unpack-usd-devkit.sh       extract devkit.tgz; assemble the pxr shim dir
 ├── tbb-probe/                 Risk 1 gate: layout diff, TBB 2020.3 vs oneTBB headers
 ├── build-delegate.sh          configure + build + install the delegate only
+├── check-delegate-linkage.sh  M1 checks: otool/nm/codesign + mayapy load test
+├── check-delegate.py          mayapy smoke test (what dyld actually loads)
 ├── make-maya-module.sh        generate the Maya module tree
 ├── run-maya.sh                launch Maya with MAYA_MODULE_PATH + runtime env
-├── check-delegate.py          mayapy smoke test
 ├── pxr-maya/pxrConfig.cmake.in   patched copy of Maya's config (3 guards only)
 ├── hydra-only/CMakeLists.txt     tiny superproject: hdMoonray + moonray_sdr_plugins
-├── maya-tbb-first.cmake          CMAKE_PROJECT_<name>_INCLUDE hook (TBB + include order)
+├── hydra-only/cmake/             FindLibatomic override, PinMayaUsd install step
 └── module/{moonray.mod.in, mayaUsdPlugInfo.json, bundle-plugInfo.json}
 ```
 
@@ -407,6 +408,42 @@ commits + the `GetTime` fix; no merge needed, the fork branch is upstream `98612
 Merge the `moonray_sdr_plugins` fork branch; superproject + preset in place. *Exit:
 `hd_moonray.dylib` exists; `otool -L` shows Maya's `libusd_*` only, no `libusd_ndr`, no
 `Python3.framework/3.9`, no `libboost_python39`, arm64; `tbb-probe.sh` passes.*
+**✅ Done 2026-09-30.** `bash building/macOSMaya/build-delegate.sh` → `local-build/maya/install`,
+then `check-delegate-linkage.sh` → PASS, including a `mayapy` load test
+(`check-delegate.py`) that inspects the images dyld actually loaded. What it took, beyond §4:
+- **No presets, no `maya-tbb-first.cmake`.** `build-delegate.sh` configures `hydra-only/`
+  directly; the superproject finds TBB before pxr itself, which is all the hook was for.
+- **Libatomic.** The installed `ArrasCoreConfig.cmake` requires it on every Unix; macOS has
+  none and nothing links it. `hydra-only/cmake/FindLibatomic.cmake` reports it found on Apple.
+- **`PXR_USD_LOCATION` = the shim**, not Maya's USD dir: `pxrTargets.cmake` uses it for both
+  `lib/` and `include/`, and Maya's USD dir has no `include/`.
+- **Deps' USD 22.11 headers shadowed 25.11 — silently.** Core MoonRay targets carry
+  `$DEPS_ROOT/include` (which has 22.11 `pxr/`) ahead of the shim. `libhydramoonray` built
+  with 219 undefined `pxrInternal_v0_22` symbols and still linked, because
+  `Python::Module` adds `-undefined dynamic_lookup`. Fix: `include_directories(BEFORE SYSTEM
+  ${PXR_INCLUDE_DIRS})`; the check now fails on any `v0_22` symbol.
+- **One real 25.11 API change** surfaced once the headers were right: pure virtual
+  `HdRendererPlugin::IsSupported(HdRendererCreateArgs const&, std::string*)`. Added, gated
+  on `__has_include(<pxr/imaging/hd/rendererCreateArgs.h>)`.
+- **Library name clashes, so USD is pinned by absolute path.** Deps has USD 22.11 as
+  `@rpath/libusd_*.dylib`; Maya's USD dir has boost 1.88 under the same names as deps' boost
+  1.78. No RPATH order works for both. `hydra-only/cmake/PinMayaUsd.cmake` (install step)
+  rewrites every Maya-only dependency to its absolute Maya path, drops Maya/shim RPATHs, and
+  ad-hoc re-signs. Inside Maya that is the file Maya already loaded.
+- **RPATH order.** The core install also has a 22.11 `libhydramoonray.dylib`, so
+  `@loader_path` must come first. hdMoonray now prepends its entries and lets the parent turn
+  off link-path RPATHs; the superproject sets `CMAKE_BUILD_WITH_INSTALL_RPATH` because
+  CMake's macOS install-time RPATH rewrite keeps shared entries in build order.
+- **hdMoonray options** (fork, `maya2027-hydra`): `HDMOONRAY_BUILD_CMD`,
+  `HDMOONRAY_BUILD_DEBUG_PLUGIN`, `HDMOONRAY_BUILD_HOUDINI`, all default ON upstream.
+- **sdr plugins** (fork, `maya2027-hydra` = `0f90564` + 1): stop building `moduleDeps.cpp`,
+  which registered a nonexistent `pxr.MoonrayShader*` Python module that USD 25.x tried to
+  import on every load.
+- `-Wl,-ld_classic` is still accepted (Risk 7): no change needed.
+
+Bonus check toward M4: in `mayapy` with `MOONRAY_CLASS_PATH` set, Sdr finds 1002 nodes and
+`DwaBaseMaterial` (106 inputs). One Sdr warning: `DwaBaseMaterial.iridescence_colors`
+declares `GfVec3f` but defaults to an array.
 
 **M2 — 🎯 FIRST PROOF OF LIFE: "Moonray" in Maya's Hydra renderer menu.**
 Module tree + `.mod` + `run-maya.sh`. *Exit: a `mayaHydraRenderOverride_HdMoonrayRendererPlugin`
@@ -473,5 +510,5 @@ No pre-code unknowns remain: the TBB probe (Risk 1) ran in M0 and passes after o
 - `building/macOSLocal/` — the workspace-local recipe this sits beside
 - `dillonbbailey/moonray_sdr_plugins@0f90564`, `dillonbbailey/hdMoonray@eca8b47,5352005`
 - `building/Ubuntu24Local/usd25-include-order.cmake` — the `CMAKE_PROJECT_<name>_INCLUDE`
-  trick reused by `maya-tbb-first.cmake`
+  trick; not needed in the end (the superproject orders TBB and includes itself)
 - TSC notes `tsc/meetings/2026/2026-{07-30,08-20}.md` — upstream Hydra 2.0 / Maya work

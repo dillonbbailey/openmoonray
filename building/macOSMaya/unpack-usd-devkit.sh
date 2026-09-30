@@ -36,8 +36,7 @@ mkdir -p "$PXR_SHIM/include"
 ln -sfn "$USD_DEVKIT/cmake"       "$PXR_SHIM/cmake"
 ln -sfn "$USD_DEVKIT/include/pxr" "$PXR_SHIM/include/pxr"
 ln -sfn "$MAYA_USD/lib"           "$PXR_SHIM/lib"
-sed -e "s|@MAYA_USD@|$MAYA_USD|g" \
-    -e "s|@MAYA_LOCATION@|$MAYA_LOCATION|g" \
+sed -e "s|@MAYA_LOCATION@|$MAYA_LOCATION|g" \
     "$MOONRAY_MAYA_SCRIPTS/pxr-maya/pxrConfig.cmake.in" > "$PXR_SHIM/pxrConfig.cmake"
 
 version="$(sed -n 's/^#define PXR_VERSION \([0-9]*\)$/\1/p' "$PXR_SHIM/include/pxr/pxr.h")"
