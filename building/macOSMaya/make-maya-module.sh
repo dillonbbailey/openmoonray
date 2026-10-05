@@ -51,16 +51,42 @@ for info in "$install"/plugin/pxr/*/plugInfo.json; do
     [ -f "$lib" ] || { echo "error: $name LibraryPath '$lib' does not exist" >&2; exit 1; }
 done
 
+# Arras session definitions. With "current-environment" packaging, execComp
+# inherits Maya's whole environment; a computation's "environment" block takes
+# precedence over it. Clear what points into Maya's Python 3.13 / USD 25.11 so
+# the render side (built against USD 22.11 / Python 3.9) never picks it up.
+# A fixed workingDirectory: Maya launched from the Dock runs with cwd "/".
+sessions="$root/sessions"
+workdir="$MAYA_LOCAL_ROOT/arras-work"
+mkdir -p "$sessions" "$workdir"
+for def in hd_single hd_multi; do
+    "$MOONRAY_PYTHON_BASE" - "$INSTALL_DIR/sessions/$def.sessiondef" "$sessions/$def.sessiondef" "$workdir" <<'EOF'
+import json, sys
+src, dst, workdir = sys.argv[1:4]
+d = json.load(open(src))
+clear = ["PYTHONPATH", "PYTHONHOME", "PXR_PLUGINPATH_NAME",
+         "PXR_MTLX_PLUGIN_SEARCH_PATHS", "PXR_MTLX_STDLIB_SEARCH_PATHS",
+         "MATERIALX_SEARCH_PATH", "USD_LOCATION"]
+for name, comp in d["computations"].items():
+    if name.startswith("("):
+        continue
+    comp.setdefault("environment", {}).update({k: "" for k in clear})
+    comp["workingDirectory"] = workdir
+json.dump(d, open(dst, "w"), indent=4)
+EOF
+done
+
 # Runtime environment for the delegate and the Arras execComp child, which
-# inherits Maya's environment and is found on PATH.
+# is found on PATH. Use "+=" with absolute values: "+:=" resolves the value
+# relative to the module root ("<root>//abs/path"), which broke the PATH entry.
 cat > "$module/moonray.mod" <<EOF
 + MAYAVERSION:2027 PLATFORM:mac moonray 1.0 $root
 MAYA_PXR_PLUGINPATH_NAME += $root/usd
 MOONRAY_CLASS_PATH = $INSTALL_DIR/shader_json
 RDL2_DSO_PATH = $INSTALL_DIR/rdl2dso
-ARRAS_SESSION_PATH = $INSTALL_DIR/sessions
+ARRAS_SESSION_PATH = $sessions
 REZ_MOONRAY_ROOT = $INSTALL_DIR
-PATH +:= $INSTALL_DIR/bin
+PATH += $INSTALL_DIR/bin
 EOF
 
 echo "Maya module ready: $module"
