@@ -2,8 +2,8 @@
 
 Status: **verified draft.** Both Stage 0 gates from the first draft are now answered, and both
 came back favourable. One new top risk was found. The Rosetta question is resolved — Maya
-runs native arm64 (Risk 2). **M0 and M1 are done** (2026-09-30): the delegate builds against
-Maya's USD 25.11 and loads in `mayapy` with the right library copies. Next: M2.
+runs native arm64 (Risk 2). **M0–M2 are done**: the delegate builds against Maya's USD 25.11,
+and "Hydra Moonray" appears in Maya's viewport Renderer menu (2026-10-05). Next: M3.
 
 Target branch: `macos-local-usdview`, or a new `maya2027-hydra` branch off it.
 
@@ -109,8 +109,9 @@ openmoonray/building/macOSMaya/
 ├── build-delegate.sh          configure + build + install the delegate only
 ├── check-delegate-linkage.sh  M1 checks: otool/nm/codesign + mayapy load test
 ├── check-delegate.py          mayapy smoke test (what dyld actually loads)
-├── make-maya-module.sh        generate the Maya module tree
-├── run-maya.sh                launch Maya with MAYA_MODULE_PATH + runtime env
+├── make-maya-module.sh        generate the Maya module tree (absolute paths)
+├── run-maya.sh                launch Maya with MAYA_MODULE_PATH only
+├── check-maya-module.py       headless M2 check (maya.standalone + mayaHydra)
 ├── pxr-maya/pxrConfig.cmake.in   patched copy of Maya's config (3 guards only)
 ├── hydra-only/CMakeLists.txt     tiny superproject: hdMoonray + moonray_sdr_plugins
 ├── hydra-only/cmake/             FindLibatomic override, PinMayaUsd install step
@@ -451,6 +452,22 @@ entry labelled **Moonray** appears.* This proves plugin discovery, `VersionCheck
 `dlopen` of an unsigned arm64 dylib into Maya, and registry registration — **without
 requiring a single MoonRay pixel.** Everything before is prerequisite; everything after is
 refinement.
+
+**✅ Done 2026-10-05.** The viewport's Renderer menu shows **"(Technology Preview) Hydra
+Moonray"** (mayaHydra's label for every Hydra renderer). Steps:
+`make-maya-module.sh` → `local-build/maya/module/`; `run-maya.sh` launches Maya with only
+`MAYA_MODULE_PATH` set (it does not source `env.sh`: build-only variables like
+`PYTHONNOUSERSITE`/`TMPDIR` would change Maya's behaviour). Notes:
+- `bundle/2511/<name>/plugInfo.json` are real files with **absolute** `LibraryPath`s: USD
+  resolves a relative `LibraryPath` lexically, so symlinked plugInfo files would break.
+- Headless check: `MAYA_MODULE_PATH=… mayapy check-maya-module.py` — `maya.standalone`,
+  loads mayaUsd + mayaHydra, asserts `mayaHydra -listRenderers` has `HdMoonrayRendererPlugin`
+  with display name `Moonray`. PASS.
+- Live GUI: `TF_DEBUG=PLUG_LOAD` shows `hd_moonray` and both sdr plugins load; `vmmap`
+  shows our `hd_moonray`/`libhydramoonray`/core `libscene_rdl2`, and no USD 22.11, Python 3.9,
+  Embree, OIIO 2.3 or OpenVDB in Maya's process.
+- `Error:  (mayaHydra)` and `displayRGBColor is unavailable in batch mode` appear in
+  `maya.standalone` with or without our module — not ours.
 
 **M3 — First pixels.** Delegate instantiates, `ArrasRenderer` spawns a local `execComp`, a
 polygon cube appears. Materials wrong/absent — expected.
