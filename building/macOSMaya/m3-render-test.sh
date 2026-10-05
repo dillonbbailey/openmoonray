@@ -14,6 +14,12 @@ mkdir -p "$M3_OUT"
 mel="$M3_OUT/startup.mel"
 printf 'python("exec(open(\\"%s\\").read())");\n' "$scripts/m3-render-test.py" > "$mel"
 
+# Isolated Maya preferences: test sessions quit with cmds.quit(), which saves
+# prefs - including the plugin autoload list, emptied by -noAutoloadPlugins.
+# Never touch the user's ~/Library/Preferences/Autodesk/maya.
+export MAYA_APP_DIR="${M3_MAYA_APP_DIR:-$local_root/maya/app-dir}"
+mkdir -p "$MAYA_APP_DIR"
+
 # hdMoonray's call trace (connect, render, ...); HDMOONRAY_INFO does nothing.
 export HDM_LOG_FILE="${HDM_LOG_FILE:-$M3_OUT/hdm.log}"
 # M3_MAYA_ARGS: extra Maya flags, e.g. "-noAutoloadPlugins" (no MtoA etc.).

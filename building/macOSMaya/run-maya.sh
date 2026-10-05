@@ -16,4 +16,9 @@ maya="${MAYA_LOCATION:-/Applications/Autodesk/maya2027}/Maya.app/Contents/MacOS/
 
 [ -f "$module/moonray.mod" ] || { echo "run make-maya-module.sh first" >&2; exit 1; }
 export MAYA_MODULE_PATH="$module${MAYA_MODULE_PATH:+:$MAYA_MODULE_PATH}"
+# Debugging only: SIP strips DYLD_* from protected binaries such as /bin/bash,
+# so a library to inject must be handed over under another name and set here.
+if [ -n "${MAYA_DYLD_INSERT_LIBRARIES:-}" ]; then
+    export DYLD_INSERT_LIBRARIES="$MAYA_DYLD_INSERT_LIBRARIES"
+fi
 exec "$maya" "$@"

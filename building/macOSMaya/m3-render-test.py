@@ -58,8 +58,11 @@ def setup():
     cmds.scriptEditorInfo(historyFilename=os.path.join(OUT, "script-editor.txt"),
                           writeHistory=True)
     try:
-        for plugin in ("mayaUsdPlugin", "mayaHydra"):
+        # M3_EXTRA_PLUGINS="mtoa ...": load more plugins first (bisecting conflicts).
+        extra = os.environ.get("M3_EXTRA_PLUGINS", "").split()
+        for plugin in extra + ["mayaUsdPlugin", "mayaHydra"]:
             cmds.loadPlugin(plugin, quiet=True)
+            say(f"loaded plugin {plugin}")
         cmds.file(new=True, force=True)
         cube = cmds.polyCube(width=2, height=2, depth=2, name="m3Cube")[0]
         cmds.setAttr(cube + ".rotateY", 30)
@@ -73,12 +76,23 @@ def setup():
         cmds.setFocus(panel)
         cmds.viewFit("persp", all=True)
         watch_panel()
+    except Exception as e:
+        say(f"SETUP ERROR: {e!r}")
+    # MtoA answers NewSceneOpened with evalDeferred("cmds.ActivateViewport20()"),
+    # which runs at the next idle and switches the focused panel back to
+    # Viewport 2.0 - once Moonray is rendering that can be seconds later. Let
+    # the deferred queue drain first.
+    cmds.evalDeferred(lambda: QtCore.QTimer.singleShot(2000, switch), lowestPriority=True)
+
+
+def switch():
+    panel = state["panel"]
+    try:
         # As the viewport's Renderer menu does it: renderer vp2 + override.
         mel.eval(f'setRendererAndOverrideInModelPanel $gViewport2 "{OVERRIDE}" "{panel}"')
         say(f"panel {panel}: override = {cmds.modelEditor(panel, query=True, rendererOverrideName=True)}")
-        say(f"active renderers: {cmds.mayaHydra(listActiveRenderers=True)}")
     except Exception as e:
-        say(f"SETUP ERROR: {e!r}")
+        say(f"SWITCH ERROR: {e!r}")
     QtCore.QTimer.singleShot(INTERVAL_MS, capture)
 
 
