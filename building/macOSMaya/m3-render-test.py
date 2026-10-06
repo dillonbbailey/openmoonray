@@ -42,6 +42,18 @@ def exec_comps():
     return [l.strip() for l in ps.splitlines() if "execComp" in l and "grep" not in l]
 
 
+def dump_images(path):
+    """Write every library dyld has mapped into Maya: what the delegate pulled in."""
+    import ctypes
+    libc = ctypes.CDLL(None)
+    libc._dyld_get_image_name.restype = ctypes.c_char_p
+    names = sorted(os.path.realpath(libc._dyld_get_image_name(i).decode())
+                   for i in range(libc._dyld_image_count()))
+    with open(path, "w") as f:
+        f.write("\n".join(names) + "\n")
+    return names
+
+
 def watch_panel():
     """Log every change to the panel's renderer override, with a timestamp."""
     panel = state["panel"]
@@ -103,6 +115,10 @@ def capture():
     try:
         procs = exec_comps()
         say(f"capture {n}: execComp processes: {len(procs)}" + "".join(f"\n    {p}" for p in procs))
+        if n == 1:
+            names = dump_images(os.path.join(OUT, "images.txt"))
+            ours = [x for x in names if "/local-build/" in x]
+            say(f"  images: {len(names)} total, {len(ours)} from the workspace (images.txt)")
         if panel:
             say(f"  override={cmds.modelEditor(panel, query=True, rendererOverrideName=True)!r} "
                 f"active={cmds.mayaHydra(listActiveRenderers=True)} "

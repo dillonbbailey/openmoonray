@@ -352,7 +352,7 @@ Verified on a live Maya process (pid 1590): `lsappinfo` reports `LSArchitecture 
 arm64-only MoonRay libraries in `local-build` are compatible. No universal rebuild is needed.
 (`libRosetta.dylib` appears mapped even in native processes; `Code Type` is authoritative.)
 
-**Risk 3 — Full rdl2 shader DSOs loaded into Maya. HIGH / MEDIUM.**
+**Risk 3 — Full rdl2 shader DSOs loaded into Maya. RESOLVED ✅ (M3b).**
 Embree 4.4, OIIO 2.3, OpenVDB 9.1 in Maya's address space. *Mitigation:*
 `setProxyModeEnabled(true)` (M3b). *Unverified:* that `rdl2::BinaryWriter` serialises a
 proxy-mode scene faithfully — test as a discrete experiment.
@@ -475,6 +475,18 @@ polygon cube appears. Materials wrong/absent — expected.
 **M3b — Proxy DSOs.** Flip `setProxyModeEnabled(true)`; confirm M3 still renders and that
 Embree/OIIO/OpenVDB have left Maya's process.
 
+**✅ M3b done 2026-10-06.** `ArrasRenderer` enables `SceneContext::setProxyModeEnabled(true)`.
+Measured in Maya while rendering (`images.txt` from `m3-render-test.py`, dyld's own image list):
+workspace libraries mapped into Maya 78 → 57; gone: Embree 4.4, OIIO 2.3.20, OpenVDB 9.1,
+OpenSubdiv 3.5 and the four full shader DSOs (now `*.so.proxy`). Left from deps: OIDN, curl,
+OpenSSL — the Arras client stack `hd_moonray` links directly (§5).
+Open item 2 (BinaryWriter fidelity) — **checked, and it found a bug**: in proxy mode
+`rdl2::Camera::setFocalLength()` is the base class's no-op, so "focal" was silently dropped
+and the render used the 30mm default instead of Maya's 50mm (FOV mismatch with the
+viewport). Fixed in hdMoonray `Camera.cc` (set "focal" by name, PerspectiveCamera only).
+After the fix the serialized scene is identical to non-proxy mode (16/16 objects, modulo
+mayaHydra's per-session render-item numbers).
+
 **M4 — Materials.** Sdr plugins registering; `MOONRAY_CLASS_PATH` → the **188 existing JSON
 files** in `install/shader_json` (no regeneration needed). *Exit: a `DwaBaseMaterial` renders
 with correct albedo — not the fully-transparent image that signals an empty Sdr registry.*
@@ -509,7 +521,9 @@ problem from a shading problem), and Maya's `MAYAHYDRALIB_RENDEROVERRIDE_*` `TF_
 ## 10. Open items
 
 1. ~~Maya under Rosetta~~ — **resolved**: verified native arm64 (see Risk 2).
-2. **`rdl2::BinaryWriter` fidelity in proxy mode** — gates M3b.
+2. ~~`rdl2::BinaryWriter` fidelity in proxy mode~~ — checked in M3b; found and fixed the
+   `setFocalLength` no-op. Other scenes may use other virtual-setter paths: compare
+   `HDMOONRAY_RDLA_OUTPUT` dumps with and without proxy mode when adding prim types.
 3. **Sdr API drift 25.08 → 25.11** — small; `SdrShaderNode`/`SdrShaderProperty` ctor
    signatures. All required headers confirmed present in the devkit.
 4. **mayaHydra emulation vs hdMoonray's legacy scene-delegate assumptions** — unprovable
