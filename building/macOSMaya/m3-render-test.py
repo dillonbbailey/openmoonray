@@ -76,8 +76,16 @@ def setup():
             cmds.loadPlugin(plugin, quiet=True)
             say(f"loaded plugin {plugin}")
         cmds.file(new=True, force=True)
-        cube = cmds.polyCube(width=2, height=2, depth=2, name="m3Cube")[0]
-        cmds.setAttr(cube + ".rotateY", 30)
+        usd_file = os.environ.get("M3_USD_FILE", "")
+        if usd_file:
+            # A mayaUsd stage instead of a Maya cube (imaged through mayaUsd's scene index).
+            shape = cmds.createNode("mayaUsdProxyShape", name="m3UsdShape")
+            cmds.setAttr(shape + ".filePath", usd_file, type="string")
+            cmds.connectAttr("time1.outTime", shape + ".time")
+            say(f"mayaUsd stage: {usd_file}")
+        else:
+            cube = cmds.polyCube(width=2, height=2, depth=2, name="m3Cube")[0]
+            cmds.setAttr(cube + ".rotateY", 30)
         cameras = {p: cmds.modelEditor(p, query=True, camera=True)
                    for p in cmds.getPanel(type="modelPanel")}
         say(f"model panels: {cameras}")
