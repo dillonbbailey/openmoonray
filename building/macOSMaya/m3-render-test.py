@@ -108,13 +108,13 @@ def capture():
                 f"active={cmds.mayaHydra(listActiveRenderers=True)} "
                 f"focus={cmds.getPanel(withFocus=True)}")
         if panel and GRAB:
-            view = omui.M3dView.getM3dViewFromModelPanel(panel)
-            view.refresh(force=True)
-            image = om.MImage()
-            view.readColorBuffer(image, True)
-            path = os.path.join(OUT, f"buffer-{n:02d}.png")
-            image.writeToFile(path, "png")
-            say(f"  saved buffer-{n:02d}.png")
+            # refresh -currentView -filename saves what the viewport presents.
+            # M3dView.readColorBuffer comes back empty (all zero) for Hydra
+            # overrides that supply real depth - Storm included.
+            cmds.setFocus(panel)
+            base = os.path.join(OUT, f"view-{n:02d}")
+            cmds.refresh(currentView=True, force=True, filename=base, fileExtension="png")
+            say(f"  saved view-{n:02d}.png")
             if PLAYBLAST:
                 cmds.playblast(frame=[cmds.currentTime(query=True)], format="image", compression="png",
                                completeFilename=os.path.join(OUT, f"playblast-{n:02d}.png"),

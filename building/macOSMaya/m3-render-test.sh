@@ -33,7 +33,7 @@ for _ in $(seq "$timeout"); do
     sleep 1
 done
 if kill -0 "$launcher" 2>/dev/null; then
-    echo "watchdog: Maya still running after ${timeout}s, killing it" | tee -a "$M3_OUT/m3.log"
+    echo "watchdog: Maya still running after ${timeout}s, killing it" | tee -a "$M3_OUT/m3.log" >&2
     pkill -9 -f "Maya.app/Contents/MacOS/Maya -command source \"$mel\"" || true
 fi
 wait "$launcher" 2>/dev/null || true

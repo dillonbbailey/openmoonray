@@ -56,11 +56,13 @@ done
 # precedence over it. Clear what points into Maya's Python 3.13 / USD 25.11 so
 # the render side (built against USD 22.11 / Python 3.9) never picks it up.
 # A fixed workingDirectory: Maya launched from the Dock runs with cwd "/".
+# Based on this build's own sessiondefs, which also carry "enableDepthBuffer"
+# (without it depth arrives as zeros and Maya's grid draws over the image).
 sessions="$root/sessions"
 workdir="$MAYA_LOCAL_ROOT/arras-work"
 mkdir -p "$sessions" "$workdir"
 for def in hd_single hd_multi; do
-    "$MOONRAY_PYTHON_BASE" - "$INSTALL_DIR/sessions/$def.sessiondef" "$sessions/$def.sessiondef" "$workdir" <<'EOF'
+    "$MOONRAY_PYTHON_BASE" - "$install/sessions/$def.sessiondef" "$sessions/$def.sessiondef" "$workdir" <<'EOF'
 import json, sys
 src, dst, workdir = sys.argv[1:4]
 d = json.load(open(src))
