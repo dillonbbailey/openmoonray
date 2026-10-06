@@ -86,6 +86,18 @@ def setup():
         else:
             cube = cmds.polyCube(width=2, height=2, depth=2, name="m3Cube")[0]
             cmds.setAttr(cube + ".rotateY", 30)
+            # M3_CUBE_SHADER="openPBRSurface:1,0,0": assign a Maya material with that base colour.
+            shader_spec = os.environ.get("M3_CUBE_SHADER", "")
+            if shader_spec:
+                node_type, _, rgb = shader_spec.partition(":")
+                shader = cmds.shadingNode(node_type, asShader=True, name="m3Shader")
+                sg = cmds.sets(renderable=True, noSurfaceShader=True, empty=True, name="m3ShaderSG")
+                cmds.connectAttr(shader + ".outColor", sg + ".surfaceShader")
+                cmds.sets(cube, edit=True, forceElement=sg)
+                if rgb:
+                    attr = {"openPBRSurface": "baseColor", "standardSurface": "baseColor"}.get(node_type, "color")
+                    cmds.setAttr(f"{shader}.{attr}", *[float(c) for c in rgb.split(",")], type="double3")
+                say(f"cube material: {node_type} {rgb}")
         cameras = {p: cmds.modelEditor(p, query=True, camera=True)
                    for p in cmds.getPanel(type="modelPanel")}
         say(f"model panels: {cameras}")

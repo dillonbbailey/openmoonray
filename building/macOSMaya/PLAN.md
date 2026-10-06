@@ -491,6 +491,21 @@ mayaHydra's per-session render-item numbers).
 files** in `install/shader_json` (no regeneration needed). *Exit: a `DwaBaseMaterial` renders
 with correct albedo — not the fully-transparent image that signals an empty Sdr registry.*
 
+**✅ M4 done 2026-10-06.** No Sdr changes were needed to *render* materials:
+- `testdata/sphere.usd` (`DwaBaseMaterial`, albedo ← `CheckerboardMap` green/blue) through
+  Maya's `usdrecord`: 39% green / 39% blue pixels, no `Invalid info:id`. Through a mayaUsd
+  stage in Maya: the RDL dump has the `DwaBaseMaterial` + bound `CheckerboardMap` assigned to
+  the sphere; rendering that dump offline shows the checker.
+- Maya's own materials: an `openPBRSurface` with base colour red arrives as
+  `UsdPreviewSurface` `diffuseColor = (1,0,0)`, `roughness = 0.3`; offline render of the dump
+  is a glossy red cube (`M3_CUBE_SHADER="openPBRSurface:1,0,0" m3-render-test.sh`).
+- Sdr parser (`moonray_sdr_plugins`): `RgbVector` now maps to Sdr `color` + dynamic array
+  (`color3f[]`), removing the default-type warnings on production materials
+  (`iridescence_colors` etc.). **Remaining:** 78 such warnings when all 1002 nodes are parsed —
+  `Vec3d` scalars (`Project*Map` translate/rotate/scale: float3 vs GfVec3d) and float-tuple
+  vector arrays (geometry classes, `UserData`, `TestInputs*`). They affect only how inputs are
+  described to authoring tools, not rendering. Candidate fix: `sdrUsdDefinitionType` metadata.
+
 **M5 — Breadth and stability.** Adapters (mesh lights, light filters), lights, instancers,
 volumes, render settings, camera navigation, repeated renderer switching, clean shutdown with
 no orphaned `execComp`.
@@ -524,8 +539,7 @@ problem from a shading problem), and Maya's `MAYAHYDRALIB_RENDEROVERRIDE_*` `TF_
 2. ~~`rdl2::BinaryWriter` fidelity in proxy mode~~ — checked in M3b; found and fixed the
    `setFocalLength` no-op. Other scenes may use other virtual-setter paths: compare
    `HDMOONRAY_RDLA_OUTPUT` dumps with and without proxy mode when adding prim types.
-3. **Sdr API drift 25.08 → 25.11** — small; `SdrShaderNode`/`SdrShaderProperty` ctor
-   signatures. All required headers confirmed present in the devkit.
+3. ~~Sdr API drift 25.08 → 25.11~~ — none hit; the 25.08 port built and works unchanged.
 4. **mayaHydra emulation vs hdMoonray's legacy scene-delegate assumptions** — unprovable
    before M3.
 
