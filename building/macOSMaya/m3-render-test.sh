@@ -12,7 +12,8 @@ export M3_OUT="$local_root/maya/m3/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$M3_OUT"
 
 mel="$M3_OUT/startup.mel"
-printf 'python("exec(open(\\"%s\\").read())");\n' "$scripts/m3-render-test.py" > "$mel"
+# M3_SCRIPT: the in-Maya script to run (default m3-render-test.py; e.g. m5-stability-test.py).
+printf 'python("exec(open(\\"%s\\").read())");\n' "$scripts/${M3_SCRIPT:-m3-render-test.py}" > "$mel"
 
 # Isolated Maya preferences: test sessions quit with cmds.quit(), which saves
 # prefs - including the plugin autoload list, emptied by -noAutoloadPlugins.
@@ -37,7 +38,10 @@ if kill -0 "$launcher" 2>/dev/null; then
     pkill -9 -f "Maya.app/Contents/MacOS/Maya -command source \"$mel\"" || true
 fi
 wait "$launcher" 2>/dev/null || true
-# execComp should not outlive Maya.
+# execComp should not outlive Maya, and Arras should clean up /tmp/exec-*.
+# Give process-group cleanup a moment first.
+sleep 3
 pgrep -fl execComp >> "$M3_OUT/orphans.txt" || true
+ls /tmp/exec-* >> "$M3_OUT/orphans.txt" 2>/dev/null || true
 
 echo "$M3_OUT"
