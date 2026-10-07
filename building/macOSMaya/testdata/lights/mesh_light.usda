@@ -1,0 +1,37 @@
+#usda 1.0
+(
+    upAxis = "Y"
+)
+def Camera "cam"
+{
+    double3 xformOp:translate = (0, 2.5, 9)
+    float3 xformOp:rotateXYZ = (-12, 0, 0)
+    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+}
+def Sphere "ball"
+{
+    double3 xformOp:translate = (0, 1, 0)
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+}
+def Plane "ground"
+{
+    uniform token axis = "Y"
+    double width = 12
+    double length = 12
+}
+
+def Mesh "emitter"
+{
+    int[] faceVertexCounts = [4]
+    int[] faceVertexIndices = [0, 1, 2, 3]
+    point3f[] points = [(-1.5, 3, -1), (1.5, 3, -1), (1.5, 3, 1), (-1.5, 3, 1)]
+    uniform token subdivisionScheme = "none"
+}
+
+def MoonrayMeshLight "meshlight"
+{
+    uniform token moonray:class = "MeshLight"
+    rel inputs:geometry = </emitter>
+    string moonray:geometry = "/emitter"
+    float inputs:intensity = 8
+}

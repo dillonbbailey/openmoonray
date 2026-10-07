@@ -98,6 +98,17 @@ def setup():
                     attr = {"openPBRSurface": "baseColor", "standardSurface": "baseColor"}.get(node_type, "color")
                     cmds.setAttr(f"{shader}.{attr}", *[float(c) for c in rgb.split(",")], type="double3")
                 say(f"cube material: {node_type} {rgb}")
+        # M3_MAYA_LIGHTS="point,spot,directional,area": add Maya lights around the scene.
+        for kind in filter(None, os.environ.get("M3_MAYA_LIGHTS", "").split(",")):
+            make = {"point": cmds.pointLight, "spot": cmds.spotLight,
+                    "directional": cmds.directionalLight}.get(kind)
+            if make:
+                shape = make(name=f"m3{kind.capitalize()}Light", intensity=1.5)
+            else:
+                shape = cmds.shadingNode(f"{kind}Light", asLight=True, name=f"m3{kind.capitalize()}Light")
+            xform = cmds.listRelatives(shape, parent=True)[0] if cmds.nodeType(shape).endswith("Light") else shape
+            cmds.xform(xform, translation=(2, 4, 3), rotation=(-50, 30, 0), worldSpace=True)
+            say(f"maya light: {kind} -> {shape}")
         cameras = {p: cmds.modelEditor(p, query=True, camera=True)
                    for p in cmds.getPanel(type="modelPanel")}
         say(f"model panels: {cameras}")
