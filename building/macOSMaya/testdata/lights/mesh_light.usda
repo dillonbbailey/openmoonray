@@ -26,6 +26,9 @@ def Mesh "emitter"
     int[] faceVertexIndices = [0, 1, 2, 3]
     point3f[] points = [(-1.5, 3, -1), (1.5, 3, -1), (1.5, 3, 1), (-1.5, 3, 1)]
     uniform token subdivisionScheme = "none"
+    # MoonRay: a MeshLight's geometry must not also be rendered (in the layer),
+    # so the emitter mesh is invisible and only the light uses it.
+    token visibility = "invisible"
 }
 
 def MoonrayMeshLight "meshlight"

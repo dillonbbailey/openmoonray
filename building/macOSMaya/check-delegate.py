@@ -24,7 +24,7 @@ failures = []
 plugins = Plug.Registry().RegisterPlugins(os.path.join(install, "plugin", "pxr"))
 names = sorted(p.name for p in plugins)
 print("registered:", names)
-expected = ["hdMoonrayAdapters", "hd_moonray", "moonrayShaderDiscovery", "moonrayShaderParser"]
+expected = ["hdMoonrayAdapters", "hdMoonraySchemas", "hd_moonray", "moonrayShaderDiscovery", "moonrayShaderParser"]
 if names != expected:
     failures.append(f"registered {names}, want {expected}")
 for plugin in plugins:

@@ -44,11 +44,13 @@ echo '{ "Includes": [ "*/" ] }' > "$bundle/plugInfo.json"
 for info in "$install"/plugin/pxr/*/plugInfo.json; do
     name="$(basename "$(dirname "$info")")"
     mkdir -p "$bundle/$name"
+    # Resource files next to plugInfo.json (e.g. a schema's generatedSchema.usda).
+    find "$(dirname "$info")" -maxdepth 1 -type f ! -name plugInfo.json -exec cp {} "$bundle/$name/" \;
     # "LibraryPath": "../../<name>.dylib" -> absolute path in $install/plugin
     sed -E "s|\"LibraryPath\": *\"\.\./\.\./([^\"]+)\"|\"LibraryPath\": \"$install/plugin/\\1\"|" \
         "$info" > "$bundle/$name/plugInfo.json"
     lib="$(sed -nE 's|.*"LibraryPath": *"([^"]+)".*|\1|p' "$bundle/$name/plugInfo.json")"
-    [ -f "$lib" ] || { echo "error: $name LibraryPath '$lib' does not exist" >&2; exit 1; }
+    [ -z "$lib" ] || [ -f "$lib" ] || { echo "error: $name LibraryPath '$lib' does not exist" >&2; exit 1; }
 done
 
 # Arras session definitions. With "current-environment" packaging, execComp
