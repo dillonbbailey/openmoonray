@@ -75,9 +75,17 @@ def setup():
         for plugin in extra + ["mayaUsdPlugin", "mayaHydra"]:
             cmds.loadPlugin(plugin, quiet=True)
             say(f"loaded plugin {plugin}")
-        cmds.file(new=True, force=True)
+        # M3_SCENE_FILE: open a saved Maya scene (keeps its camera) instead of building one.
+        scene_file = os.environ.get("M3_SCENE_FILE", "")
+        if scene_file:
+            cmds.file(scene_file, open=True, force=True)
+            say(f"opened scene {scene_file}")
+        else:
+            cmds.file(new=True, force=True)
         usd_file = os.environ.get("M3_USD_FILE", "")
-        if usd_file:
+        if scene_file:
+            pass
+        elif usd_file:
             # A mayaUsd stage instead of a Maya cube (imaged through mayaUsd's scene index).
             shape = cmds.createNode("mayaUsdProxyShape", name="m3UsdShape")
             cmds.setAttr(shape + ".filePath", usd_file, type="string")
@@ -117,7 +125,8 @@ def setup():
                      if cam.split("|")[-1] in ("persp", "perspShape"))
         state["panel"] = panel
         cmds.setFocus(panel)
-        cmds.viewFit("persp", all=True)
+        if not scene_file:
+            cmds.viewFit("persp", all=True)
         watch_panel()
     except Exception as e:
         say(f"SETUP ERROR: {e!r}")
