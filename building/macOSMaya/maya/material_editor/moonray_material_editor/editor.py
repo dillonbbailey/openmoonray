@@ -754,6 +754,15 @@ class MaterialEditor(QMainWindow):
         self.parameter_groups = []
         self.parameter_labels = {}
 
+    def _menu_action(self, menu, title, callback):
+        # Maya: an action owned by the editor. Inside Maya, PySide deletes
+        # actions made by QMenu.addAction(text, callable) once they are also
+        # added elsewhere (see the shortcut scoping below).
+        action = QAction(title, self)
+        action.triggered.connect(lambda checked=False: callback())
+        menu.addAction(action)
+        return action
+
     def _menus(self):
         # MoonLab's menus, keeping the Material Editor commands. Project, USD
         # Viewer, RenderView, console, simulation, appearance and layout items
@@ -781,12 +790,12 @@ class MaterialEditor(QMainWindow):
                 self.save_as_current_action = action
         examples = file_menu.addMenu("Examples")
         for title, filename in [("Porcelain checker", "porcelain.moonraygraph"), ("Displaced stone", "displaced_stone.moonraygraph"), ("Hair strands", "hair.moonraygraph"), ("Scattering volume", "volume.moonraygraph"), ("OpenVDB smoke", "vdb.moonraygraph"), ("Cloth", "cloth.moonraygraph"), ("Filtered light", "light_filter.moonraygraph"), ("Display compositing", "display_filter.moonraygraph"), ("Texture channels", "texture_channels.moonraygraph"), ("Layered two-sided material", "two_sided.moonraygraph"), ("Camera and scene references", "scene_references.moonraygraph")]:
-            examples.addAction(title, lambda checked=False, name=filename: self.open_example(name))
+            self._menu_action(examples, title, lambda checked=False, name=filename: self.open_example(name))
         file_menu.addSeparator()
-        self.copy_preview_action = file_menu.addAction("Copy preview scene to a Maya USD stage", self.copy_preview_to_usd)
+        self.copy_preview_action = self._menu_action(file_menu, "Copy preview scene to a Maya USD stage", self.copy_preview_to_usd)
         self.copy_preview_action.setToolTip("Copy the current material, preview geometry, camera, and lights into a USD file and load it as a mayaUsd stage.")
         file_menu.addAction(self.moonray_gui_action)
-        self.export_gui_action = file_menu.addAction("Export to RDLA and render with moonray_gui…", self.export_to_moonray_gui)
+        self.export_gui_action = self._menu_action(file_menu, "Export to RDLA and render with moonray_gui…", self.export_to_moonray_gui)
         self.export_gui_action.setToolTip("Save the material preview scene as RDLA and open it in moonray_gui.")
         edit = self.menuBar().addMenu("Edit")
         undo = self.undo_action = QAction("Undo", self)
@@ -798,15 +807,24 @@ class MaterialEditor(QMainWindow):
         bind_shortcut(redo, "edit.redo")
         edit.addAction(redo)
         edit.addSeparator()
-        self.application_settings_action = edit.addAction("Application Settings…", self.show_application_settings)
+        self.application_settings_action = self._menu_action(edit, "Application Settings…", self.show_application_settings)
         self.update_edit_actions()
         tools_menu = self.menuBar().addMenu("Tools")
-        self.convert_materials_action = tools_menu.addAction("Convert USD materials to MoonRay…",
+        # Maya: MoonLab binds from the USD Viewer's prim menu; here it acts on
+        # the USD prims selected in Maya (outliner or viewport).
+        self.assign_material_action = self._menu_action(tools_menu, "Assign material to selected USD prims",
+            lambda: self.bind_graph_to_usd(list(self.usd_viewer.selected_prim_paths)))
+        self.assign_material_action.setToolTip("Bind this tab's material to the USD prims selected in Maya, in the stage's edit target. Maya's Undo reverts it.")
+        tools_menu.addAction(self.usd_viewer.sync_materials)
+        self.usd_viewer.sync_materials.setText("Sync materials to USD")
+        self.usd_viewer.sync_materials.setToolTip("Write graph edits to the USD materials they are linked to, as you edit.")
+        tools_menu.addSeparator()
+        self.convert_materials_action = self._menu_action(tools_menu, "Convert USD materials to MoonRay…",
             lambda: self.material_conversion.open())
         self.convert_materials_action.setEnabled(False)
         self.convert_materials_action.setToolTip("Review source materials and recommended destinations, then create a conversion sublayer.")
         help_menu = self.menuBar().addMenu("Help")
-        help_menu.addAction("Graph controls", lambda: QMessageBox.information(self, "Graph controls",
+        self._menu_action(help_menu, "Graph controls", lambda: QMessageBox.information(self, "Graph controls",
             "Double-click a library shader to add it.\nDrag from an output socket to an input.\nRight-click an input or wire to disconnect.\nUse the ○ / ● button in Parameters to expose inputs.\n\nF: frame graph · Tab: shader library menu\nMiddle-drag: pan · Wheel: zoom\nDelete: remove selected nodes or wires\nCtrl+C / Ctrl+V: copy / paste selected nodes\nCtrl+Z / Ctrl+Shift+Z: undo / redo\n\nGraph files preserve the editor layout. USD exports contain a native MoonRay material.\nColor values are scene-linear. The preview is displayed as sRGB.\n\nShortcuts apply while the Material Editor has focus; elsewhere Maya's own hotkeys apply."))
         # Maya: menu shortcuts (Ctrl+S, Ctrl+Z, ...) only while the editor has
         # focus. With the default WindowShortcut context they would fire
@@ -1105,6 +1123,9 @@ class MaterialEditor(QMainWindow):
             self.usd_viewer.show_error("This material tab has been closed. Choose another material.")
             return
         paths = [path] if isinstance(path, str) else list(path)
+        if not paths:
+            self.usd_viewer.show_error("Select USD prims in Maya to assign the material to.")
+            return
         self.usd_viewer.edit_command("bind_material", paths=paths, graph=doc.graph.data,
                                      base_dir=str(doc.path.parent if doc.path else EDITOR_ROOT))
 
@@ -2392,7 +2413,7 @@ class MaterialEditor(QMainWindow):
             try:
                 document.graph.save(directory / "graph.moonraygraph")
                 self.job_revision = document.revision
-                # macOS has no setsid(1): run_job.py starts the worker in its own
+                # macOS has no setsid(1): run-job.sh starts the worker in its own
                 # session, so cancel_job can signal the whole process group.
                 process.start(args[0], args[1:])
             except (OSError, ValueError) as exc:

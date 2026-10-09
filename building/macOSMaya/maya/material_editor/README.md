@@ -19,8 +19,17 @@ What changed for Maya:
 - The stylesheet is set on the editor, never on Maya's QApplication. The
   app-wide appearance event filter became `themes.polish_tree`. Menu
   shortcuts only apply while the editor has focus.
-- `maya_stage.py`: replaces the usdview worker for USD scene features. It is
-  not connected to mayaUsd stages yet.
+- `maya_stage.py`: replaces the usdview worker for USD scene features, answering
+  its requests in-process for mayaUsd stages with MoonLab's own USD helpers:
+  - The current stage follows Maya's selection: the stage of selected USD prims
+    or of a selected proxy shape, otherwise the only stage in the scene.
+  - USD SCENE NODES lists that stage's materials, lights, cameras and textures.
+  - **Tools ▸ Assign material to selected USD prims** binds the current tab.
+    Material sync, *Select bound prims*, light / camera / transform links and
+    the conversion dialog work as in MoonLab.
+  - Edits go to the stage's edit target (Maya's Layer Editor) and into Maya's
+    undo queue as one "MoonRay: …" step each, through mayaUsd's
+    `UsdUndoBlock`. MoonLab's separate USD undo stack is not used.
 - Background jobs (preview renders, exports, thumbnails, .tx, bakes) run through
   `run-job.sh` in the workspace's MoonRay environment (`building/macOSLocal`:
   USD 22.11, Python 3.9, OpenImageIO), started with an empty environment so
@@ -32,4 +41,8 @@ What changed for Maya:
 - File metadata keys (`lunatic:*`) and the `.moonraygraph` format are
   unchanged, so graphs move freely between MoonLab and Maya.
 
-Test: `M3_SCRIPT=material-editor-test.py bash ../../m3-render-test.sh`.
+Tests, run inside Maya from `building/macOSMaya`:
+- `M3_SCRIPT=material-editor-test.py bash m3-render-test.sh` checks the
+  window, the preview render and that Maya's own UI is left alone.
+- `M3_SCRIPT=material-editor-usd-test.py HDMOONRAY_RDLA_OUTPUT=<file>.rdla bash m3-render-test.sh`
+  checks binding, Maya undo, sync, selection and the Hydra Moonray result.
