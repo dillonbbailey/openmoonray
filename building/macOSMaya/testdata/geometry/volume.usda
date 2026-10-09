@@ -1,0 +1,54 @@
+#usda 1.0
+(
+    upAxis = "Y"
+)
+# OpenVDB volume (the unit-sized bunny from rats/assets) with a MoonRay VdbVolume shader,
+# plus a second, unbound volume that gets hdMoonray's default volume shader.
+def Camera "cam"
+{
+    double3 xformOp:translate = (0, 0.3, 9)
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+}
+def DistantLight "sun"
+{
+    float inputs:intensity = 50000
+    float3 xformOp:rotateXYZ = (-40, 30, 0)
+    uniform token[] xformOpOrder = ["xformOp:rotateXYZ"]
+}
+def Volume "bunny" (
+    prepend apiSchemas = ["MaterialBindingAPI"]
+)
+{
+    rel field:density = </bunny/density>
+    float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+    rel material:binding = </vdb>
+    double3 xformOp:translate = (-1.2, 0, 0)
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+    def OpenVDBAsset "density"
+    {
+        token fieldName = "foo"  # the grid in this file is named "foo"
+        asset filePath = @../../../../rats/assets/models/bunny.vdb@
+    }
+}
+def Volume "plain"
+{
+    rel field:density = </plain/density>
+    float3[] extent = [(-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)]
+    double3 xformOp:translate = (1.2, 0, 0)
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+    def OpenVDBAsset "density"
+    {
+        token fieldName = "foo"  # the grid in this file is named "foo"
+        asset filePath = @../../../../rats/assets/models/bunny.vdb@
+    }
+}
+def Material "vdb"
+{
+    color4f outputs:moonray:volume.connect = <shader.outputs:volume>
+    def Shader "shader"
+    {
+        uniform token info:id = "VdbVolume"
+        color3f inputs:color_mult = (1, 0.6, 0.4)
+        color4f outputs:volume
+    }
+}

@@ -5,7 +5,8 @@
 # Render USD files with the Moonray delegate inside Maya's USD 25.11 / mayapy,
 # headless, via Maya's usdrecord - the same delegate, USD and Arras path as
 # Maya's Hydra viewport, but producing images. For each input writes
-# <out>/<name>.png, .rdla (scene sent to MoonRay), .hdm.log and .log.
+# <out>/<name>.png, .rdla (scene sent to MoonRay), .hdm.log and .log; <name> is
+# the file's base name, prefixed with its directory's if two inputs share it.
 #   usdrecord-test.sh <outdir> <file.usd>... [-- extra usdrecord args]
 set -euo pipefail
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/env.sh" >/dev/null
@@ -17,8 +18,11 @@ while [ $# -gt 0 ]; do
     files+=("$1"); shift
 done
 install="$MAYA_LOCAL_ROOT/install"
+bases=" "; for f in "${files[@]}"; do bases+="$(basename "${f%.*}") "; done
 for f in "${files[@]}"; do
     name="$(basename "${f%.*}")"
+    rest="${bases/ $name / }"
+    [ "$rest" = "${rest/ $name / }" ] || name="$(basename "$(dirname "$f")")_$name"
     env -u PYTHONNOUSERSITE -u TMPDIR \
         PXR_PLUGINPATH_NAME="$install/plugin/pxr" PYTHONPATH="$MAYA_USD/lib/python" \
         MOONRAY_CLASS_PATH="$INSTALL_DIR/shader_json" RDL2_DSO_PATH="$INSTALL_DIR/rdl2dso" \

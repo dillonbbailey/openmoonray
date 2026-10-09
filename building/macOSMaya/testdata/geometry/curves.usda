@@ -1,0 +1,63 @@
+#usda 1.0
+(
+    upAxis = "Y"
+)
+# Curve types: linear and cubic (bspline, catmullRom, bezier) BasisCurves,
+# and NurbsCurves, which hdMoonray has no rprim for - USD's imaging must
+# convert them to basisCurves or they are dropped.
+def Camera "cam"
+{
+    double3 xformOp:translate = (0, 1.5, 10)
+    uniform token[] xformOpOrder = ["xformOp:translate"]
+}
+def DistantLight "sun"
+{
+    float inputs:intensity = 50000
+    float3 xformOp:rotateXYZ = (-40, 20, 0)
+    uniform token[] xformOpOrder = ["xformOp:rotateXYZ"]
+}
+def BasisCurves "linear"
+{
+    uniform token type = "linear"
+    int[] curveVertexCounts = [4]
+    point3f[] points = [(-4,0,0), (-3.5,1,0), (-3,0,0), (-2.5,1,0)]
+    float[] widths = [0.08] (interpolation = "constant")
+    color3f[] primvars:displayColor = [(1, 0.3, 0.2)]
+}
+def BasisCurves "bspline"
+{
+    uniform token type = "cubic"
+    uniform token basis = "bspline"
+    int[] curveVertexCounts = [6]
+    point3f[] points = [(-2,0,0), (-2,0,0), (-1.5,2,0), (-1,0,0), (-0.5,2,0), (-0.5,2,0)]
+    float[] widths = [0.1] (interpolation = "constant")
+    color3f[] primvars:displayColor = [(0.3, 1, 0.3)]
+}
+def BasisCurves "catmullRom"
+{
+    uniform token type = "cubic"
+    uniform token basis = "catmullRom"
+    int[] curveVertexCounts = [5]
+    point3f[] points = [(0,0,0), (0,0,0), (0.5,2,0), (1,0,0), (1,0,0)]
+    float[] widths = [0.1] (interpolation = "constant")
+    color3f[] primvars:displayColor = [(0.3, 0.5, 1)]
+}
+def BasisCurves "bezier"
+{
+    uniform token type = "cubic"
+    uniform token basis = "bezier"
+    int[] curveVertexCounts = [4]
+    point3f[] points = [(1.5,0,0), (1.5,2.5,0), (2.5,2.5,0), (2.5,0,0)]
+    float[] widths = [0.1] (interpolation = "constant")
+    color3f[] primvars:displayColor = [(1, 1, 0.3)]
+}
+def NurbsCurves "nurbs"
+{
+    int[] curveVertexCounts = [4]
+    int[] order = [4]
+    double[] knots = [0, 0, 0, 0, 1, 1, 1, 1]
+    double2[] ranges = [(0, 1)]
+    point3f[] points = [(3,0,0), (3,2.5,0), (4,2.5,0), (4,0,0)]
+    float[] widths = [0.1] (interpolation = "constant")
+    color3f[] primvars:displayColor = [(1, 0.3, 1)]
+}

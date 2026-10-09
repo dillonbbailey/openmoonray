@@ -1,0 +1,61 @@
+#usda 1.0
+(
+    upAxis = "Y"
+)
+# PointInstancer with two prototypes (a mesh cube and a sphere), per-instance
+# orientation and scale, one material bound to the instancer's prototypes.
+def Camera "cam"
+{
+    double3 xformOp:translate = (0, 3, 10)
+    float3 xformOp:rotateXYZ = (-15, 0, 0)
+    uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateXYZ"]
+}
+def DistantLight "sun"
+{
+    float inputs:intensity = 50000
+    float3 xformOp:rotateXYZ = (-50, 30, 0)
+    uniform token[] xformOpOrder = ["xformOp:rotateXYZ"]
+}
+def Material "red"
+{
+    token outputs:surface.connect = <pbr.outputs:surface>
+    def Shader "pbr"
+    {
+        uniform token info:id = "UsdPreviewSurface"
+        color3f inputs:diffuseColor = (0.8, 0.15, 0.1)
+        token outputs:surface
+    }
+}
+def PointInstancer "scatter"
+{
+    rel prototypes = [</scatter/protos/cube>, </scatter/protos/ball>]
+    int[] protoIndices = [0, 1, 0, 1, 0, 1, 0, 1, 0]
+    point3f[] positions = [(-3,0.5,-2), (0,0.5,-2), (3,0.5,-2), (-3,0.5,0), (0,0.5,0), (3,0.5,0), (-3,0.5,2), (0,0.5,2), (3,0.5,2)]
+    quath[] orientations = [(1,0,0,0), (1,0,0,0), (0.924,0,0.383,0), (1,0,0,0), (0.924,0,0.383,0), (1,0,0,0), (0.924,0,0.383,0), (1,0,0,0), (1,0,0,0)]
+    float3[] scales = [(1,1,1), (0.6,0.6,0.6), (1,1,1), (0.8,0.8,0.8), (1,1.5,1), (0.8,0.8,0.8), (1,1,1), (0.6,0.6,0.6), (0.5,0.5,0.5)]
+
+    def Scope "protos"
+    {
+        def Mesh "cube" (
+            prepend apiSchemas = ["MaterialBindingAPI"]
+        )
+        {
+            rel material:binding = </red>
+            int[] faceVertexCounts = [4, 4, 4, 4, 4, 4]
+            int[] faceVertexIndices = [0, 1, 3, 2, 2, 3, 5, 4, 4, 5, 7, 6, 6, 7, 1, 0, 1, 7, 5, 3, 6, 0, 2, 4]
+            point3f[] points = [(-0.5,-0.5,0.5), (0.5,-0.5,0.5), (-0.5,0.5,0.5), (0.5,0.5,0.5), (-0.5,0.5,-0.5), (0.5,0.5,-0.5), (-0.5,-0.5,-0.5), (0.5,-0.5,-0.5)]
+            uniform token subdivisionScheme = "none"
+        }
+        def Sphere "ball"
+        {
+            double radius = 0.5
+            color3f[] primvars:displayColor = [(0.2, 0.5, 1)]
+        }
+    }
+}
+def Plane "ground"
+{
+    uniform token axis = "Y"
+    double width = 12
+    double length = 12
+}

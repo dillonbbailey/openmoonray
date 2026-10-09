@@ -1,0 +1,7 @@
+#usda 1.0
+(
+    upAxis = "Y"
+    subLayers = [@curves.usda@, @nurbspatch.usda@, @points.usda@, @pointinstancer.usda@, @volume.usda@]
+)
+# Every stage in this directory in one, for a single mayaUsd stage in Maya
+# (they overlap in space; this is for checking what reaches the delegate).
