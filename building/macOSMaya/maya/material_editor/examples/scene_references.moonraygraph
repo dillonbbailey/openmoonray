@@ -1,0 +1,190 @@
+{
+  "version": 3,
+  "name": "Camera projection and scene references",
+  "nodes": [
+    {
+      "id": "n_23dd9c26f764",
+      "shader": "PreviewCamera",
+      "label": "PreviewCamera",
+      "position": [
+        -1000,
+        0
+      ],
+      "values": {},
+      "ports": []
+    },
+    {
+      "id": "n_3db37de25558",
+      "shader": "ProjectCameraMap",
+      "label": "ProjectCameraMap",
+      "position": [
+        -710,
+        0
+      ],
+      "values": {},
+      "ports": [
+        "projector"
+      ]
+    },
+    {
+      "id": "n_33f9cd794249",
+      "shader": "ImageMap",
+      "label": "ImageMap",
+      "position": [
+        -360,
+        0
+      ],
+      "values": {
+        "texture": "channel_test.tx",
+        "texture_coordinates": 2,
+        "gamma": 0
+      },
+      "ports": [
+        "input_texture_coordinates",
+        "mip_bias",
+        "offset",
+        "scale"
+      ]
+    },
+    {
+      "id": "n_2535250a2fc0",
+      "shader": "DwaBaseMaterial",
+      "label": "DwaBaseMaterial",
+      "position": [
+        0,
+        0
+      ],
+      "values": {},
+      "ports": [
+        "albedo",
+        "roughness",
+        "metallic",
+        "specular",
+        "input_normal",
+        "emission",
+        "sss_trace_set",
+        "diffuse_lightset"
+      ]
+    },
+    {
+      "id": "n_a520cb08d2c1",
+      "shader": "PreviewObject",
+      "label": "PreviewObject",
+      "position": [
+        -710,
+        360
+      ],
+      "values": {},
+      "ports": []
+    },
+    {
+      "id": "n_e11dec2dcbe3",
+      "shader": "TraceSet",
+      "label": "TraceSet",
+      "position": [
+        -360,
+        340
+      ],
+      "values": {},
+      "ports": [
+        "geometries"
+      ]
+    },
+    {
+      "id": "n_1082648aa46c",
+      "shader": "PreviewKeyLight",
+      "label": "PreviewKeyLight",
+      "position": [
+        -710,
+        570
+      ],
+      "values": {},
+      "ports": []
+    },
+    {
+      "id": "n_7f394de034f4",
+      "shader": "LightSet",
+      "label": "LightSet",
+      "position": [
+        -360,
+        540
+      ],
+      "values": {},
+      "ports": [
+        "lights"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "source": "n_23dd9c26f764",
+      "target": "n_3db37de25558",
+      "input": "projector",
+      "output": "out"
+    },
+    {
+      "source": "n_3db37de25558",
+      "target": "n_33f9cd794249",
+      "input": "input_texture_coordinates",
+      "output": "out"
+    },
+    {
+      "source": "n_33f9cd794249",
+      "target": "n_2535250a2fc0",
+      "input": "albedo",
+      "output": "out"
+    },
+    {
+      "source": "n_a520cb08d2c1",
+      "target": "n_e11dec2dcbe3",
+      "input": "geometries",
+      "output": "out"
+    },
+    {
+      "source": "n_e11dec2dcbe3",
+      "target": "n_2535250a2fc0",
+      "input": "sss_trace_set",
+      "output": "out"
+    },
+    {
+      "source": "n_1082648aa46c",
+      "target": "n_7f394de034f4",
+      "input": "lights",
+      "output": "out"
+    },
+    {
+      "source": "n_7f394de034f4",
+      "target": "n_2535250a2fc0",
+      "input": "diffuse_lightset",
+      "output": "out"
+    }
+  ],
+  "surface": "n_2535250a2fc0",
+  "displacement": null,
+  "volume": null,
+  "light": null,
+  "display": null,
+  "aov": null,
+  "geometry": null,
+  "camera": null,
+  "lightset": null,
+  "preview": {
+    "displacement_enabled": true,
+    "subdivision_scheme": "catmullClark",
+    "mesh_resolution": 4,
+    "adaptive_error": 1.0,
+    "geometry": "auto",
+    "render_view": "beauty",
+    "samples": 5,
+    "max_depth": 10,
+    "max_hair_depth": 10,
+    "vdb_file": "",
+    "vdb_grid": "density",
+    "vdb_scale": 1.0,
+    "vdb_offset": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  }
+}

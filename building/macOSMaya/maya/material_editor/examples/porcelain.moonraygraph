@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "name": "Porcelain / checker",
+  "nodes": [
+    {
+      "id": "n_e278b0e62bf0",
+      "shader": "CheckerboardMap",
+      "label": "Porcelain checker",
+      "position": [
+        -370,
+        25
+      ],
+      "values": {
+        "color_A": [
+          0.06,
+          0.32,
+          0.29
+        ],
+        "color_B": [
+          0.76,
+          0.79,
+          0.67
+        ],
+        "num_u_tiles": 12,
+        "num_v_tiles": 8
+      },
+      "ports": [
+        "input_texture_coordinates"
+      ]
+    },
+    {
+      "id": "n_88bbcc89b9c6",
+      "shader": "DwaBaseMaterial",
+      "label": "Glazed porcelain",
+      "position": [
+        0,
+        0
+      ],
+      "values": {
+        "roughness": 0.23,
+        "show_clearcoat": true,
+        "clearcoat_roughness": 0.12
+      },
+      "ports": [
+        "albedo",
+        "roughness",
+        "metallic",
+        "specular",
+        "input_normal",
+        "emission"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "source": "n_e278b0e62bf0",
+      "target": "n_88bbcc89b9c6",
+      "input": "albedo"
+    }
+  ],
+  "surface": "n_88bbcc89b9c6"
+}

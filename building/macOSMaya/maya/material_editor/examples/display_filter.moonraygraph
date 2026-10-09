@@ -1,0 +1,125 @@
+{
+  "version": 3,
+  "name": "Beauty \u00d7 albedo \u00b7 display compositing",
+  "nodes": [
+    {
+      "id": "n_324eedd134f6",
+      "shader": "DwaBaseMaterial",
+      "label": "DwaBaseMaterial",
+      "position": [
+        -280,
+        -170
+      ],
+      "values": {
+        "albedo": [
+          0.18,
+          0.45,
+          0.7
+        ],
+        "roughness": 0.25
+      },
+      "ports": [
+        "albedo",
+        "roughness",
+        "metallic",
+        "specular",
+        "input_normal",
+        "emission"
+      ]
+    },
+    {
+      "id": "n_e6053fa614d0",
+      "shader": "RenderOutput",
+      "label": "RenderOutput",
+      "position": [
+        -580,
+        190
+      ],
+      "values": {
+        "result": 0
+      },
+      "ports": [
+        "exr_header_attributes",
+        "camera",
+        "display_filter"
+      ]
+    },
+    {
+      "id": "n_8b769e8f1eac",
+      "shader": "RenderOutput",
+      "label": "RenderOutput",
+      "position": [
+        -580,
+        450
+      ],
+      "values": {
+        "result": 7,
+        "material_aov": "albedo"
+      },
+      "ports": [
+        "exr_header_attributes",
+        "camera",
+        "display_filter"
+      ]
+    },
+    {
+      "id": "n_edbf487b0771",
+      "shader": "OpDisplayFilter",
+      "label": "OpDisplayFilter",
+      "position": [
+        -200,
+        220
+      ],
+      "values": {
+        "operation": 2
+      },
+      "ports": [
+        "input1",
+        "input2",
+        "mask"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "source": "n_e6053fa614d0",
+      "target": "n_edbf487b0771",
+      "input": "input1",
+      "output": "out"
+    },
+    {
+      "source": "n_8b769e8f1eac",
+      "target": "n_edbf487b0771",
+      "input": "input2",
+      "output": "out"
+    }
+  ],
+  "surface": "n_324eedd134f6",
+  "displacement": null,
+  "volume": null,
+  "light": null,
+  "display": "n_edbf487b0771",
+  "aov": null,
+  "geometry": null,
+  "camera": null,
+  "lightset": null,
+  "preview": {
+    "displacement_enabled": true,
+    "subdivision_scheme": "catmullClark",
+    "mesh_resolution": 4,
+    "adaptive_error": 1.0,
+    "geometry": "auto",
+    "render_view": "beauty",
+    "samples": 5,
+    "max_depth": 10,
+    "max_hair_depth": 10,
+    "vdb_file": "",
+    "vdb_grid": "density",
+    "vdb_scale": 1.0,
+    "vdb_offset": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  }
+}

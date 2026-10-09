@@ -1,0 +1,136 @@
+{
+  "version": 3,
+  "name": "Filtered area light",
+  "nodes": [
+    {
+      "id": "n_0f74b0b8fb0f",
+      "shader": "DwaBaseMaterial",
+      "label": "DwaBaseMaterial",
+      "position": [
+        20,
+        30
+      ],
+      "values": {
+        "albedo": [
+          0.55,
+          0.55,
+          0.55
+        ],
+        "roughness": 0.3
+      },
+      "ports": [
+        "albedo",
+        "roughness",
+        "metallic",
+        "specular",
+        "input_normal",
+        "emission"
+      ]
+    },
+    {
+      "id": "n_d4ac9610bf32",
+      "shader": "ColorRampLightFilter",
+      "label": "ColorRampLightFilter",
+      "position": [
+        -580,
+        360
+      ],
+      "values": {
+        "colors": [
+          [
+            0.15,
+            0.45,
+            1.0
+          ],
+          [
+            0.15,
+            0.45,
+            1.0
+          ]
+        ],
+        "end_distance": 20.0
+      },
+      "ports": []
+    },
+    {
+      "id": "n_1049b8cab4ae",
+      "shader": "RectLight",
+      "label": "RectLight",
+      "position": [
+        -260,
+        350
+      ],
+      "values": {
+        "node_xform": [
+          [
+            0.7071067811865475,
+            0.0,
+            0.7071067811865475,
+            -0.0
+          ],
+          [
+            0.48507125007266594,
+            0.7276068751089989,
+            -0.48507125007266594,
+            0.0
+          ],
+          [
+            -0.5144957554275266,
+            0.6859943405700354,
+            0.5144957554275266,
+            0.0
+          ],
+          [
+            -2.9999999999999996,
+            3.999999999999999,
+            2.9999999999999996,
+            1.0
+          ]
+        ],
+        "intensity": 8.0,
+        "normalized": false,
+        "width": 3.0,
+        "height": 3.0
+      },
+      "ports": [
+        "light_filters"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "source": "n_d4ac9610bf32",
+      "target": "n_1049b8cab4ae",
+      "input": "light_filters",
+      "output": "out"
+    }
+  ],
+  "surface": "n_0f74b0b8fb0f",
+  "displacement": null,
+  "volume": null,
+  "light": "n_1049b8cab4ae",
+  "display": null,
+  "aov": null,
+  "geometry": null,
+  "camera": null,
+  "lightset": null,
+  "preview": {
+    "displacement_enabled": true,
+    "subdivision_scheme": "catmullClark",
+    "mesh_resolution": 4,
+    "adaptive_error": 1.0,
+    "geometry": "light_rig",
+    "render_view": "beauty",
+    "samples": 5,
+    "max_depth": 10,
+    "max_hair_depth": 10,
+    "vdb_file": "",
+    "vdb_grid": "density",
+    "vdb_scale": 1.0,
+    "vdb_offset": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  }
+}

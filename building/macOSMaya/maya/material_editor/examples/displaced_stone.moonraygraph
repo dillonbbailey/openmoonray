@@ -1,0 +1,96 @@
+{
+  "version": 2,
+  "name": "Weathered stone / displacement",
+  "nodes": [
+    {
+      "id": "n_992a28f289ac",
+      "shader": "DwaBaseMaterial",
+      "label": "Warm stone",
+      "position": [
+        -60,
+        -190
+      ],
+      "values": {
+        "albedo": [
+          0.38,
+          0.27,
+          0.16
+        ],
+        "roughness": 0.7,
+        "specular": 0.45
+      },
+      "ports": [
+        "albedo",
+        "roughness",
+        "metallic",
+        "specular",
+        "input_normal",
+        "emission"
+      ]
+    },
+    {
+      "id": "n_68bea0207780",
+      "shader": "NoiseMap_v2",
+      "label": "Stone relief",
+      "position": [
+        -430,
+        180
+      ],
+      "values": {
+        "frequency_multiplier": 5.0,
+        "max_level": 3.0,
+        "color_A": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "color_B": [
+          1.0,
+          1.0,
+          1.0
+        ]
+      },
+      "ports": [
+        "frequency_multiplier",
+        "amplitude",
+        "max_level",
+        "lacunarity",
+        "persistence",
+        "distortion"
+      ]
+    },
+    {
+      "id": "n_8f755d6467ca",
+      "shader": "NormalDisplacement",
+      "label": "Surface relief",
+      "position": [
+        -60,
+        200
+      ],
+      "values": {
+        "height_multiplier": 0.45,
+        "zero_value": 0.5,
+        "bound_padding": 0.3
+      },
+      "ports": [
+        "height",
+        "height_multiplier"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "source": "n_68bea0207780",
+      "target": "n_8f755d6467ca",
+      "input": "height"
+    }
+  ],
+  "surface": "n_992a28f289ac",
+  "displacement": "n_8f755d6467ca",
+  "preview": {
+    "displacement_enabled": true,
+    "subdivision_scheme": "catmullClark",
+    "mesh_resolution": 8,
+    "adaptive_error": 0.5
+  }
+}

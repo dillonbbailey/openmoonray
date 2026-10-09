@@ -1,0 +1,69 @@
+{
+  "version": 3,
+  "name": "Woven blue cloth",
+  "nodes": [
+    {
+      "id": "n_8d8ae585e38d",
+      "shader": "DwaFabricMaterial",
+      "label": "DwaFabricMaterial",
+      "position": [
+        -50,
+        30
+      ],
+      "values": {
+        "albedo": [
+          0.025,
+          0.12,
+          0.3
+        ],
+        "warp_color": [
+          0.045,
+          0.2,
+          0.4
+        ],
+        "weft_color": [
+          0.09,
+          0.25,
+          0.4
+        ],
+        "thin_geometry": true,
+        "show_fuzz": true,
+        "fuzz": 0.35
+      },
+      "ports": [
+        "albedo",
+        "input_normal",
+        "emission"
+      ]
+    }
+  ],
+  "connections": [],
+  "surface": "n_8d8ae585e38d",
+  "displacement": null,
+  "volume": null,
+  "light": null,
+  "display": null,
+  "aov": null,
+  "geometry": null,
+  "camera": null,
+  "lightset": null,
+  "preview": {
+    "displacement_enabled": true,
+    "subdivision_scheme": "catmullClark",
+    "mesh_resolution": 4,
+    "adaptive_error": 1.0,
+    "geometry": "cloth",
+    "render_view": "beauty",
+    "samples": 5,
+    "max_depth": 10,
+    "max_hair_depth": 10,
+    "vdb_file": "",
+    "vdb_grid": "density",
+    "vdb_scale": 1.0,
+    "vdb_offset": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  }
+}

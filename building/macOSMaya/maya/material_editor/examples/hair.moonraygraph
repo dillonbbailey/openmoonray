@@ -1,0 +1,55 @@
+{
+  "version": 3,
+  "name": "Copper hair \u00b7 round curves",
+  "nodes": [
+    {
+      "id": "n_7e311fefafe6",
+      "shader": "HairMaterial_v3",
+      "label": "HairMaterial_v3",
+      "position": [
+        -50,
+        30
+      ],
+      "values": {
+        "hair_color": [
+          0.32,
+          0.11,
+          0.035
+        ],
+        "primary_specular_roughness": 0.3
+      },
+      "ports": [
+        "emission"
+      ]
+    }
+  ],
+  "connections": [],
+  "surface": "n_7e311fefafe6",
+  "displacement": null,
+  "volume": null,
+  "light": null,
+  "display": null,
+  "aov": null,
+  "geometry": null,
+  "camera": null,
+  "lightset": null,
+  "preview": {
+    "displacement_enabled": true,
+    "subdivision_scheme": "catmullClark",
+    "mesh_resolution": 4,
+    "adaptive_error": 1.0,
+    "geometry": "auto",
+    "render_view": "beauty",
+    "samples": 5,
+    "max_depth": 10,
+    "max_hair_depth": 10,
+    "vdb_file": "",
+    "vdb_grid": "density",
+    "vdb_scale": 1.0,
+    "vdb_offset": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  }
+}

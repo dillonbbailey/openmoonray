@@ -1,0 +1,57 @@
+{
+  "version": 3,
+  "name": "OpenVDB smoke",
+  "nodes": [
+    {
+      "id": "n_925f0c8012b5",
+      "shader": "VdbVolume",
+      "label": "VdbVolume",
+      "position": [
+        0,
+        0
+      ],
+      "values": {
+        "color_mult": [
+          0.6,
+          0.75,
+          1.0
+        ]
+      },
+      "ports": [
+        "opacity_gain_mult",
+        "color_mult",
+        "incandescence_gain_mult",
+        "anisotropy"
+      ]
+    }
+  ],
+  "connections": [],
+  "surface": null,
+  "displacement": null,
+  "volume": "n_925f0c8012b5",
+  "light": null,
+  "display": null,
+  "aov": null,
+  "geometry": null,
+  "camera": null,
+  "lightset": null,
+  "preview": {
+    "displacement_enabled": true,
+    "subdivision_scheme": "catmullClark",
+    "mesh_resolution": 4,
+    "adaptive_error": 1.0,
+    "geometry": "auto",
+    "render_view": "beauty",
+    "samples": 5,
+    "max_depth": 10,
+    "max_hair_depth": 10,
+    "vdb_file": "smoke.vdb",
+    "vdb_grid": "density",
+    "vdb_scale": 1.0,
+    "vdb_offset": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  }
+}

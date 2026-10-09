@@ -1,0 +1,377 @@
+#usda 1.0
+
+class "MoonrayStudioGeometryAPI" (
+    doc = "Editor-provided MoonRay geometry attributes supported by hdMoonray."
+)
+{
+    float primvars:moonray:ray_epsilon = 0 (
+        displayGroup = "MoonRay / Geometry"
+        doc = "When a secondary ray is fired, anything within this distance of the intersection point will be ignored.  Instead, it is considered part of the current intersection's geometry.  If zero, an automatically calculated epsilon will be used."
+        interpolation = "constant"
+    )
+    float primvars:moonray:shadow_ray_epsilon = 0 (
+        displayGroup = "MoonRay / Geometry"
+        doc = 'When a shadow ray is fired, anything within this distance of the intersection point will be ignored.  If this value is less than "ray_epsilon", then it has no additional effect.'
+        interpolation = "constant"
+    )
+    bool primvars:moonray:visible_diffuse_reflection = 1 (
+        displayGroup = "MoonRay / Geometry"
+        doc = "whether the geometry is visible in diffuse reflection"
+        interpolation = "constant"
+    )
+    bool primvars:moonray:visible_diffuse_transmission = 1 (
+        displayGroup = "MoonRay / Geometry"
+        doc = "whether the geometry is visible in diffuse transmission"
+        interpolation = "constant"
+    )
+    bool primvars:moonray:visible_glossy_reflection = 1 (
+        displayGroup = "MoonRay / Geometry"
+        doc = "whether the geometry is visible in glossy reflection."
+        interpolation = "constant"
+    )
+    bool primvars:moonray:visible_glossy_transmission = 1 (
+        displayGroup = "MoonRay / Geometry"
+        doc = "whether the geometry is visible in glossy transmission (refraction)."
+        interpolation = "constant"
+    )
+    bool primvars:moonray:visible_in_camera = 1 (
+        displayGroup = "MoonRay / Geometry"
+        doc = "whether the geometry is visible to camera rays"
+        interpolation = "constant"
+    )
+    bool primvars:moonray:visible_mirror_reflection = 1 (
+        displayGroup = "MoonRay / Geometry"
+        doc = "whether the geometry is visible in miror reflection."
+        interpolation = "constant"
+    )
+    bool primvars:moonray:visible_mirror_transmission = 1 (
+        displayGroup = "MoonRay / Geometry"
+        doc = "whether the geometry is visible in miror transmission (refraction)."
+        interpolation = "constant"
+    )
+    bool primvars:moonray:visible_shadow = 1 (
+        displayGroup = "MoonRay / Geometry"
+        doc = "whether the geometry casts shadows"
+        interpolation = "constant"
+    )
+    bool primvars:moonray:visible_volume = 1 (
+        displayGroup = "MoonRay / Geometry"
+        doc = "whether the geometry is visible in indirect volume rays"
+        interpolation = "constant"
+    )
+}
+
+class "MoonrayStudioMeshAPI" (
+    doc = "Editor-provided MoonRay mesh attributes supported by hdMoonray."
+)
+{
+    float primvars:moonray:adaptive_error = 0 (
+        displayGroup = "MoonRay / Mesh"
+        doc = "The maximum allowable difference in pixels for subdivison mesh adaptive tessellation (each final tessellated edge won't be longer than n pixels if adaptive error is set to n). A value of 0 disables adaptive tessellation, reverting to uniform tessellation, which sometimes is more stable in animation. Adaptive tessellation is not supported for instances. The maximum tessellation won't exceed the value specified in mesh_resolution.  This prevents excessive tessellation when the mesh is extremely close to the camera."
+        interpolation = "constant"
+    )
+    float primvars:moonray:mesh_resolution = 2 (
+        displayGroup = "MoonRay / Mesh"
+        doc = 'The maximum resolution to which a mesh will be tessellated. NOTE: to prevent t-junctions, only even values are supported. If "mesh resolution" is set to n, it will first be rounded up to N=n+1 for odd n, N=n for even n. An edge on an input face will then be tessellated to at most N segments. If "adaptive error" is set to 0, every edge on the input face will be uniformly tessellated to N segments. Otherwise the mesh will tessellated adaptively based on its relationship to the camera.'
+        interpolation = "constant"
+    )
+    bool primvars:moonray:smooth_normal = 1 (
+        displayGroup = "MoonRay / Mesh"
+        doc = "Generates smooth shading normals on a PolygonMesh when the mesh doesn't provide shading normals"
+        interpolation = "constant"
+    )
+}
+
+class "MoonrayStudioCurvesAPI" (
+    doc = "Editor-provided MoonRay curves attributes supported by hdMoonray."
+)
+{
+    token primvars:moonray:curves_subtype = "ray_facing" (
+        allowedTokens = ["ray_facing", "round", "normal_oriented"]
+        displayGroup = "MoonRay / Curves"
+        doc = "Selects the style the curves are rendered"
+        interpolation = "constant"
+    )
+    int primvars:moonray:tessellation_rate = 4 (
+        displayGroup = "MoonRay / Curves"
+        doc = "Number of segments to split curve spans into"
+        interpolation = "constant"
+    )
+}
+
+class "MoonrayStudioVolumeAPI" (
+    doc = "Editor-provided MoonRay volume attributes supported by hdMoonray."
+)
+{
+    float primvars:moonray:emission_sample_rate = 1 (
+        displayGroup = "MoonRay / Volume"
+        doc = "the relative scale of input emission grid resolution. Lower value has lower memory overhead and faster render time, with the cost of lower fidelity of emission shape and illumination"
+        interpolation = "constant"
+    )
+    float primvars:moonray:velocity_sample_rate = 0.2 (
+        displayGroup = "MoonRay / Volume"
+        doc = "the relative scale of input velocity grid resolution. Lower value has lower memory overhead and lower fidelity of motion blur effect, which is sometimes desired for artistic reasons"
+        interpolation = "constant"
+    )
+    float primvars:moonray:velocity_scale = 1 (
+        displayGroup = "MoonRay / Volume"
+        doc = "A scale factor for the velocity field. A value of 0 disables motion blur."
+        interpolation = "constant"
+    )
+}
+
+class "MoonrayStudioCameraAPI" (
+    doc = "Editor-provided MoonRay camera attributes supported by hdMoonray."
+)
+{
+    bool moonray:bokeh = 0 (
+        displayGroup = "MoonRay / Camera"
+        doc = "Enable Bokeh. Requires DOF to be enabled."
+    )
+    float moonray:bokeh_angle = 0 (
+        displayGroup = "MoonRay / Camera"
+        doc = "Angle of iris rotation"
+    )
+    int moonray:bokeh_sides = 0 (
+        displayGroup = "MoonRay / Camera"
+        doc = "Number of sides of the iris. Specifying less than 3 sides will default to a disk."
+    )
+    float moonray:mb_shutter_bias = 0 (
+        displayGroup = "MoonRay / Camera"
+        doc = "Biases the motion blur samples toward one end of the shutter interval."
+    )
+}
+
+class "MoonrayStudioLightAPI" (
+    doc = "Editor-provided MoonRay light attributes supported by hdMoonray."
+)
+{
+    float moonray:max_shadow_distance = 0 (
+        displayGroup = "MoonRay / Light"
+        doc = """The distance from the light beyond which a light-receiving surface will no longer receive shadows cast from that light.
+Note that the distance is thresholded for each occlusion ray cast for this light, it is possible for a receiving point to lie at an intermediate distance such that some parts of the light are closer than the threshold distance and other parts beyond it, in which case the point will appearto be in partial shadow."""
+    )
+    float moonray:min_shadow_distance = 0 (
+        displayGroup = "MoonRay / Light"
+        doc = """The distance from the light before which a light-receiving surface will no longer receive shadows cast from that light.
+Note that the distance is thresholded for each occlusion ray cast for this light, it is possible for a receiving point to lie at an intermediate distance such that some parts of the light are closer than the threshold distance and other parts beyond it, in which case the point will appearto be in partial shadow."""
+    )
+    token moonray:presence_shadows = "use default" (
+        allowedTokens = ["force off", "force on", "use default"]
+        displayGroup = "MoonRay / Light"
+        doc = "Switch this attribute on for shadows cast from this light to correctly respect presence values. When off, surfaces with a material with presence less than 1.0 will cast opaque shadows from this light. This is an optimization - when the attribute is off, occlusion rays (fast) are used for testing for shadows. When it is on, regular rays (slower) are used, and the material's presence is evaluated to determine how much shadowing should occur. When set to \"use default\" it reads from the value of SceneVariable enable_presence_shadows."
+    )
+    bool moonray:ray_termination = 0 (
+        displayGroup = "MoonRay / Light"
+        doc = "Whether the light is used for ray termination color. Ray termination color is used for filling in falsely dark areas where ray paths have been terminated too early by the depth controls. Such a ray path immediately exits to any ray termination light(s) present in the light set being applied to the lobe, ignoring occlusion by scene geometry. Any light can either be a regular light or a ray termination light (but not both). Thus they can be freely assigned to light sets, which provides a mechanism for applying specific ray termination lights to specific materials, parts or objects. Ray termination color is only applied to non-hair transmission lobes."
+    )
+    token moonray:visible_in_camera = "use default" (
+        allowedTokens = ["force off", "force on", "use default"]
+        displayGroup = "MoonRay / Light"
+        doc = "Whether the light is directly visible in the scene's active camera. When set to \"use default\" it reads from the value of SceneVariable lights_visible_in_camera."
+    )
+}
+
+class GeometryLight "MoonrayMeshLight" (
+    apiSchemas = ["LightAPI", "CollectionAPI:lightLink", "CollectionAPI:shadowLink"]
+    doc = "MoonRay mesh emitter referencing a USD Mesh through inputs:geometry. Requires hdMoonray's mesh light adapter."
+)
+{
+    uniform opaque collection:lightLink (
+        customData = {
+            string userDocBrief = """This property represents the collection for the purpose of
+        allowing another collection to include it."""
+        }
+    )
+    rel collection:lightLink:excludes (
+        customData = {
+            string userDocBrief = """Specifies a list of targets that are excluded below
+        the included paths in this collection."""
+        }
+    )
+    uniform token collection:lightLink:expansionRule = "expandPrims" (
+        allowedTokens = ["explicitOnly", "expandPrims", "expandPrimsAndProperties"]
+        customData = {
+            string userDocBrief = """Specifies how the paths that are included in
+        the collection must be expanded to determine its members."""
+        }
+    )
+    uniform bool collection:lightLink:includeRoot = 1 (
+        customData = {
+            string userDocBrief = """The 'include root' setting for the
+lightLink collection for this light, used when configuring light-linking."""
+        }
+    )
+    rel collection:lightLink:includes (
+        customData = {
+            string userDocBrief = "Specifies a list of targets that are included in the collection."
+        }
+    )
+    uniform pathExpression collection:lightLink:membershipExpression (
+        customData = {
+            string userDocBrief = """Specifies a path expression that determines membership in this
+        collection."""
+        }
+    )
+    uniform opaque collection:shadowLink (
+        customData = {
+            string userDocBrief = """This property represents the collection for the purpose of
+        allowing another collection to include it."""
+        }
+    )
+    rel collection:shadowLink:excludes (
+        customData = {
+            string userDocBrief = """Specifies a list of targets that are excluded below
+        the included paths in this collection."""
+        }
+    )
+    uniform token collection:shadowLink:expansionRule = "expandPrims" (
+        allowedTokens = ["explicitOnly", "expandPrims", "expandPrimsAndProperties"]
+        customData = {
+            string userDocBrief = """Specifies how the paths that are included in
+        the collection must be expanded to determine its members."""
+        }
+    )
+    uniform bool collection:shadowLink:includeRoot = 1 (
+        customData = {
+            string userDocBrief = """The 'include root' setting for the
+shadowLink collection for this light, used when configuring light-linking."""
+        }
+    )
+    rel collection:shadowLink:includes (
+        customData = {
+            string userDocBrief = "Specifies a list of targets that are included in the collection."
+        }
+    )
+    uniform pathExpression collection:shadowLink:membershipExpression (
+        customData = {
+            string userDocBrief = """Specifies a path expression that determines membership in this
+        collection."""
+        }
+    )
+    rel geometry (
+        customData = {
+            string userDocBrief = """Relationship to the geometry to use as the
+light source."""
+        }
+    )
+    color3f inputs:color = (1, 1, 1) (
+        customData = {
+            string userDocBrief = """The color of the emitted light, in the
+rendering color space."""
+        }
+        displayGroup = "Basic"
+        displayName = "Color"
+    )
+    float inputs:colorTemperature = 6500 (
+        customData = {
+            string userDocBrief = """The color temperature of the light, in
+degrees Kelvin."""
+        }
+        displayGroup = "Basic"
+        displayName = "Color Temperature"
+    )
+    float inputs:diffuse = 1 (
+        customData = {
+            string userDocBrief = """A multiplier for the effect of this light
+on the diffuse response of materials."""
+        }
+        displayGroup = "Refine"
+        displayName = "Diffuse Multiplier"
+    )
+    bool inputs:enableColorTemperature = 0 (
+        customData = {
+            string userDocBrief = """Controls whether colorTemperature is
+used."""
+        }
+        displayGroup = "Basic"
+        displayName = "Enable Color Temperature"
+    )
+    float inputs:exposure = 0 (
+        customData = {
+            string userDocBrief = """Exposure setting of the light. Scales
+the brightness of the light exponentially."""
+        }
+        displayGroup = "Basic"
+        displayName = "Exposure"
+    )
+    rel inputs:geometry
+    float inputs:intensity = 1 (
+        customData = {
+            string userDocBrief = """The base intensity of the light. Scales the
+brightness of the light linearly."""
+        }
+        displayGroup = "Basic"
+        displayName = "Intensity"
+    )
+    bool inputs:normalize = 0 (
+        customData = {
+            string userDocBrief = """Controls if the light power should be
+normalized by the surface area of the light. If enabled, the light power
+remains constant if the light's area or angular size is changed."""
+        }
+        displayGroup = "Advanced"
+        displayName = "Normalize Power"
+    )
+    float inputs:specular = 1 (
+        customData = {
+            string userDocBrief = """A multiplier for the effect of this light
+on the specular response of materials."""
+        }
+        displayGroup = "Refine"
+        displayName = "Specular Multiplier"
+    )
+    rel light:filters (
+        customData = {
+            string userDocBrief = """The set of light filters, if any, that
+apply to this light."""
+        }
+    )
+    uniform token light:materialSyncMode = "noMaterialResponse" (
+        allowedTokens = ["materialGlowTintsLight", "independent", "noMaterialResponse"]
+        customData = {
+            string userDocBrief = """Specifies the lighting response of a
+material (if any) bound to the prim that has this schema applied."""
+        }
+        displayGroup = "Geometry"
+        displayName = "Material Sync Mode"
+    )
+    uniform token light:shaderId = "GeometryLight" (
+        customData = {
+            string userDocBrief = '''The shader ID for a GeometryLight
+("GeometryLight").'''
+        }
+        displayGroup = "Internal"
+    )
+    rel proxyPrim (
+        customData = {
+            string userDocBrief = '''The proxyPrim relationship allows us to link a
+        prim whose purpose is "render" to its (single target)
+        purpose="proxy" prim.'''
+        }
+    )
+    uniform token purpose = "default" (
+        allowedTokens = ["default", "render", "proxy", "guide"]
+        customData = {
+            string userDocBrief = """Purpose is a classification of geometry into categories that
+        can each be independently included or excluded from traversals of prims
+        on a stage, such as rendering or bounding-box computation traversals."""
+        }
+    )
+    token visibility = "inherited" (
+        allowedTokens = ["inherited", "invisible"]
+        customData = {
+            string userDocBrief = '''Visibility is meant to be the simplest form of "pruning"
+        visibility that is supported by most DCC apps.'''
+        }
+    )
+    uniform token[] xformOpOrder (
+        customData = {
+            string userDocBrief = """Encodes the sequence of transformation operations in the
+        order in which they should be pushed onto a transform stack while
+        visiting a UsdStage's prims in a graph traversal that will effect
+        the desired positioning for this prim and its descendant prims."""
+        }
+    )
+}
+

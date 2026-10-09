@@ -313,6 +313,23 @@ ExternalProject_Add(JPEGTurbo
 )
 set(CHAIN JPEGTurbo)
 
+# Without libpng OIIO silently drops its PNG plugin: MoonRay could not read PNG
+# textures, nor oiiotool write PNGs (see ../rebuild-oiio-png.sh).
+ExternalProject_Add(PNG
+    GIT_REPOSITORY https://github.com/pnggroup/libpng
+    GIT_TAG v1.6.44
+    BUILD_COMMAND make ${JOBS_ARG}
+    CMAKE_ARGS
+        ${COMMON_CMAKE_ARGS}
+        -DPNG_SHARED=ON
+        -DPNG_STATIC=OFF
+        -DPNG_TESTS=OFF
+        -DPNG_TOOLS=OFF
+        -DPNG_FRAMEWORK=OFF
+    DEPENDS ${CHAIN}
+)
+set(CHAIN PNG)
+
 ExternalProject_Add(pybind11
     GIT_REPOSITORY https://github.com/pybind/pybind11
     GIT_TAG a2e59f0e7065404b44dfe92a28aca47ba1378dc4 # v2.13.6
@@ -336,6 +353,7 @@ ExternalProject_Add(OpenImageIO
         -DDISABLE_CMAKE_SEARCH_PATHS=TRUE
         -DCMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH=TRUE
         -DOpenEXR_ROOT=${InstallRoot}
+        -DPNG_ROOT=${InstallRoot}
         -DUSE_QT=0
         -DUSE_PYTHON=1
         -DPython_EXECUTABLE=${PythonExecutable}

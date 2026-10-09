@@ -1,0 +1,109 @@
+{
+  "Plugins": [
+    {
+      "Name": "moonrayStudioSchemas",
+      "Type": "resource",
+      "Root": ".",
+      "ResourcePath": ".",
+      "Info": {
+        "Types": {
+          "UsdMoonrayStudioGeometryAPI": {
+            "alias": {
+              "UsdSchemaBase": "MoonrayStudioGeometryAPI"
+            },
+            "bases": [
+              "UsdAPISchemaBase"
+            ],
+            "schemaIdentifier": "MoonrayStudioGeometryAPI",
+            "schemaKind": "singleApplyAPI",
+            "apiSchemaCanOnlyApplyTo": [
+              "Gprim",
+              "Volume"
+            ]
+          },
+          "UsdMoonrayStudioMeshAPI": {
+            "alias": {
+              "UsdSchemaBase": "MoonrayStudioMeshAPI"
+            },
+            "bases": [
+              "UsdAPISchemaBase"
+            ],
+            "schemaIdentifier": "MoonrayStudioMeshAPI",
+            "schemaKind": "singleApplyAPI",
+            "apiSchemaCanOnlyApplyTo": [
+              "Mesh",
+              "Cube",
+              "Sphere",
+              "Cone",
+              "Cylinder",
+              "Capsule"
+            ]
+          },
+          "UsdMoonrayStudioCurvesAPI": {
+            "alias": {
+              "UsdSchemaBase": "MoonrayStudioCurvesAPI"
+            },
+            "bases": [
+              "UsdAPISchemaBase"
+            ],
+            "schemaIdentifier": "MoonrayStudioCurvesAPI",
+            "schemaKind": "singleApplyAPI",
+            "apiSchemaCanOnlyApplyTo": [
+              "BasisCurves"
+            ]
+          },
+          "UsdMoonrayStudioVolumeAPI": {
+            "alias": {
+              "UsdSchemaBase": "MoonrayStudioVolumeAPI"
+            },
+            "bases": [
+              "UsdAPISchemaBase"
+            ],
+            "schemaIdentifier": "MoonrayStudioVolumeAPI",
+            "schemaKind": "singleApplyAPI",
+            "apiSchemaCanOnlyApplyTo": [
+              "Volume"
+            ]
+          },
+          "UsdMoonrayStudioCameraAPI": {
+            "alias": {
+              "UsdSchemaBase": "MoonrayStudioCameraAPI"
+            },
+            "bases": [
+              "UsdAPISchemaBase"
+            ],
+            "schemaIdentifier": "MoonrayStudioCameraAPI",
+            "schemaKind": "singleApplyAPI",
+            "apiSchemaCanOnlyApplyTo": [
+              "Camera"
+            ]
+          },
+          "UsdMoonrayStudioLightAPI": {
+            "alias": {
+              "UsdSchemaBase": "MoonrayStudioLightAPI"
+            },
+            "bases": [
+              "UsdAPISchemaBase"
+            ],
+            "schemaIdentifier": "MoonrayStudioLightAPI",
+            "schemaKind": "singleApplyAPI",
+            "apiSchemaCanOnlyApplyTo": [
+              "BoundableLightBase",
+              "NonboundableLightBase"
+            ]
+          },
+          "UsdMoonrayStudioMeshLight": {
+            "alias": {
+              "UsdSchemaBase": "MoonrayMeshLight"
+            },
+            "bases": [
+              "UsdLuxGeometryLight"
+            ],
+            "schemaIdentifier": "MoonrayMeshLight",
+            "schemaKind": "concreteTyped"
+          }
+        }
+      }
+    }
+  ]
+}

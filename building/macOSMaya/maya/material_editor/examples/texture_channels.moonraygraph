@@ -1,0 +1,98 @@
+{
+  "version": 3,
+  "name": "Texture RGB, red and alpha channels",
+  "nodes": [
+    {
+      "id": "n_e88fa43c35b1",
+      "shader": "ImageMap",
+      "label": "ImageMap",
+      "position": [
+        -360,
+        20
+      ],
+      "values": {
+        "texture": "channel_test.tx",
+        "gamma": 0
+      },
+      "ports": [
+        "input_texture_coordinates",
+        "mip_bias",
+        "offset",
+        "scale"
+      ]
+    },
+    {
+      "id": "n_ad2f4a4f1028",
+      "shader": "DwaBaseMaterial",
+      "label": "DwaBaseMaterial",
+      "position": [
+        0,
+        30
+      ],
+      "values": {
+        "albedo": [
+          0.3,
+          0.3,
+          0.3
+        ]
+      },
+      "ports": [
+        "albedo",
+        "roughness",
+        "metallic",
+        "specular",
+        "input_normal",
+        "emission",
+        "presence"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "source": "n_e88fa43c35b1",
+      "target": "n_ad2f4a4f1028",
+      "input": "albedo",
+      "output": "out"
+    },
+    {
+      "source": "n_e88fa43c35b1",
+      "target": "n_ad2f4a4f1028",
+      "input": "roughness",
+      "output": "r"
+    },
+    {
+      "source": "n_e88fa43c35b1",
+      "target": "n_ad2f4a4f1028",
+      "input": "presence",
+      "output": "a"
+    }
+  ],
+  "surface": "n_ad2f4a4f1028",
+  "displacement": null,
+  "volume": null,
+  "light": null,
+  "display": null,
+  "aov": null,
+  "geometry": null,
+  "camera": null,
+  "lightset": null,
+  "preview": {
+    "displacement_enabled": true,
+    "subdivision_scheme": "catmullClark",
+    "mesh_resolution": 4,
+    "adaptive_error": 1.0,
+    "geometry": "auto",
+    "render_view": "beauty",
+    "samples": 5,
+    "max_depth": 10,
+    "max_hair_depth": 10,
+    "vdb_file": "",
+    "vdb_grid": "density",
+    "vdb_scale": 1.0,
+    "vdb_offset": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  }
+}
