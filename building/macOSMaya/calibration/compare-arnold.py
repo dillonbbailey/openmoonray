@@ -67,8 +67,12 @@ def ratio(moonray, arnold):
     m, a = load(moonray), load(arnold)
     m3, a3 = m[..., :3].mean(-1), a[..., :3].mean(-1)
     covered = (m[..., 3] > 0.5) & (a[..., 3] > 0.5)
-    # The watermark: lit Arnold pixels outside the object. Drop its rows.
-    watermark = (~covered) & (a3 > 0.01)
+    # The watermark: lit Arnold pixels away from the object (its anti-aliased
+    # edge is lit too, so grow the object by a few pixels first). Drop its rows.
+    near = covered | (a[..., 3] > 0.01)
+    for _ in range(4):
+        near = near | np.roll(near, 1, 0) | np.roll(near, -1, 0) | np.roll(near, 1, 1) | np.roll(near, -1, 1)
+    watermark = (~near) & (a3 > 0.01)
     rows = np.where(watermark.any(axis=1))[0]
     keep = covered & (a3 > 1e-5)
     if rows.size:
