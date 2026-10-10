@@ -16,8 +16,8 @@
 	branch = main
 [submodule "moonray/moonray"]
 	path = moonray/moonray
-	url = https://github.com/OpenMoonRay/moonray.git
-	branch = main
+	url = https://github.com/dillonbbailey/moonray.git
+	branch = maya2027-hydra
 [submodule "moonray/moonshine"]
 	path = moonray/moonshine
 	url = https://github.com/OpenMoonRay/moonshine.git
