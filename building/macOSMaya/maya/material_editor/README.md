@@ -24,7 +24,8 @@ What changed for Maya:
   - The current stage follows Maya's selection: the stage of selected USD prims
     or of a selected proxy shape, otherwise the only stage in the scene.
   - USD SCENE NODES lists that stage's materials, lights, cameras and textures.
-  - **Tools ▸ Assign material to selected USD prims** binds the current tab.
+  - **Tools ▸ Assign material to selected USD prims** binds the current tab;
+    the same item is on a material's right-click menu in MATERIAL GRAPHS.
     Material sync, *Select bound prims*, light / camera / transform links and
     the conversion dialog work as in MoonLab.
   - Edits go to the stage's edit target (Maya's Layer Editor) and into Maya's
@@ -46,3 +47,6 @@ Tests, run inside Maya from `building/macOSMaya`:
   window, the preview render and that Maya's own UI is left alone.
 - `M3_SCRIPT=material-editor-usd-test.py HDMOONRAY_RDLA_OUTPUT=<file>.rdla bash m3-render-test.sh`
   checks binding, Maya undo, sync, selection and the Hydra Moonray result.
+- `M3_SCRIPT=material-editor-live-test.py bash m3-render-test.sh` assigns a
+  material from the right-click menu while Hydra Moonray renders and checks
+  that the viewport picks it up.

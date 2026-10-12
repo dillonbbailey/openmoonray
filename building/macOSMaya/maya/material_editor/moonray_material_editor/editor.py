@@ -1064,7 +1064,17 @@ class MaterialEditor(QMainWindow):
         item = self.material_graphs.currentItem()
         if item:
             identifier = item.data(Qt.ItemDataRole.UserRole)
-            menu.addAction("Delete", lambda: self.delete_graph(next((i for i, doc in enumerate(self.documents) if doc.id == identifier), -1)))
+            # Maya: the Tools menu's assignment, for this graph.
+            doc = next((doc for doc in self.documents if doc.id == identifier), None)
+            paths = list(self.usd_viewer.selected_prim_paths)
+            assign = menu.addAction("Assign material to selected USD prims",
+                                    lambda: self.bind_graph_to_usd(paths, identifier))
+            bindable = bool(doc and (doc.graph.data["surface"] or doc.graph.data["volume"]))
+            assign.setEnabled(bool(paths) and bindable and self.usd_viewer.ready)
+            assign.setToolTip("Bind this material to the USD prims selected in Maya, in the stage's edit target. Maya's Undo reverts it."
+                              if bindable else "Connect a surface or volume output before binding.")
+            menu.addSeparator()
+            menu.addAction("Delete",lambda: self.delete_graph(next((i for i, doc in enumerate(self.documents) if doc.id == identifier), -1)))
         return menu
 
     def delete_graph(self, index):
