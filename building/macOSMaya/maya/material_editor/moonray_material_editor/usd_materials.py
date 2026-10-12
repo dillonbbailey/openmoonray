@@ -3,7 +3,7 @@ from functools import lru_cache
 import os
 from pathlib import Path
 
-from pxr import Sdf, UsdGeom, UsdLux, UsdShade
+from pxr import Sdf, Usd, UsdGeom, UsdLux, UsdShade
 
 from .model import Catalog, Graph, SHADER_TYPES, TERMINALS, PROJECTION_CAMERAS
 from .worker import create_stage
@@ -75,6 +75,42 @@ def prepare_material_binding(prim):
             raise ValueError("Cannot bind this GeomSubset: " + reason)
 
 
+def _material_users_below(prim):
+    """Geometry and face subsets under prim, the prims whose binding renders."""
+    for child in Usd.PrimRange(prim, Usd.TraverseInstanceProxies()):
+        if child != prim and (child.IsA(UsdGeom.Gprim) or child.IsA(UsdGeom.Subset)):
+            yield child
+
+
+def cover_descendants(prim, material):
+    """Maya: assigning to a group assigns to everything under it. In USD a
+    descendant's own binding beats an inherited one (a mesh imported with its
+    material keeps it), so when one would, make prim's bindings
+    strongerThanDescendants. Returns how many descendants that took over."""
+    if prim.IsA(UsdGeom.Gprim) or prim.IsA(UsdGeom.Subset):
+        return 0
+    path = material.GetPath()
+    purposes = (UsdShade.Tokens.allPurpose, UsdShade.Tokens.full)
+
+    def overridden():
+        return [child for child in _material_users_below(prim)
+                if any(UsdShade.MaterialBindingAPI(child).ComputeBoundMaterial(purpose)[0].GetPath() != path
+                       for purpose in purposes)]
+    taken = len(overridden())
+    if not taken:
+        return 0
+    api = UsdShade.MaterialBindingAPI(prim)
+    # Both purposes, so a descendant's full-purpose binding is covered too.
+    for purpose in purposes:
+        if not api.Bind(material, bindingStrength=UsdShade.Tokens.strongerThanDescendants, materialPurpose=purpose):
+            raise ValueError("USD could not bind the material to " + str(prim.GetPath()))
+    left = overridden()
+    if left:
+        raise ValueError(str(left[0].GetPath()) + " keeps its own material (a stronger binding below " +
+                         str(prim.GetPath()) + "). No assignments were applied; assign to it directly.")
+    return taken
+
+
 def bind_graph_material(stage, prim, data, base_dir):
     return bind_graph_materials(stage, [prim], data, base_dir)
 
@@ -112,6 +148,7 @@ def bind_graph_materials(stage, prims, data, base_dir):
         if full and full.HasAuthoredTargets():
             if not api.Bind(material, materialPurpose=UsdShade.Tokens.full):
                 raise ValueError("USD could not bind the full material to " + str(prim.GetPath()))
+    covered = sum(cover_descendants(prim, material) for prim in prims)
     # Resolve after every assignment so selected ancestors/descendants work in
     # any selection order. StageEdits rolls back the entire batch on failure.
     for prim in prims:
@@ -120,4 +157,4 @@ def bind_graph_materials(stage, prims, data, base_dir):
             raise ValueError("An ancestor or collection binding takes precedence on " + str(prim.GetPath()) +
                              ". No assignments were applied; adjust that binding before assigning here.")
     paths = [str(prim.GetPath()) for prim in prims]
-    return dict(path=paths[0], paths=paths, material=str(material_path), name=graph.data["name"])
+    return dict(path=paths[0], paths=paths, material=str(material_path), name=graph.data["name"], covered=covered)

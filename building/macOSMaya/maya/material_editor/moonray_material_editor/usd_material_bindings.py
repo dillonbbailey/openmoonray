@@ -2,7 +2,7 @@
 from pxr import Usd, UsdGeom, UsdShade
 
 from .usd_editing import editable_prim
-from .usd_materials import can_bind_material, prepare_material_binding
+from .usd_materials import can_bind_material, cover_descendants, prepare_material_binding
 
 
 def scene_material(stage, path):
@@ -79,6 +79,7 @@ def bind_existing_material(stage, material_path, paths):
             strength = UsdShade.MaterialBindingAPI.GetMaterialBindingStrength(relationship)
             if not api.Bind(material, bindingStrength=strength, materialPurpose=purpose):
                 raise ValueError("USD could not bind the material to " + str(prim.GetPath()))
+    covered = sum(cover_descendants(prim, material) for prim in prims)
     for prim in prims:
         api = UsdShade.MaterialBindingAPI(prim)
         for purpose in UsdShade.MaterialBindingAPI.GetMaterialPurposes():
@@ -86,4 +87,4 @@ def bind_existing_material(stage, material_path, paths):
             if not resolved or resolved.GetPath() != material.GetPath():
                 raise ValueError("A stronger layer, ancestor or collection binding takes precedence on " +
                                  str(prim.GetPath()) + ". No assignments were applied; adjust that binding or the edit target first.")
-    return dict(material=str(material.GetPath()), paths=paths)
+    return dict(material=str(material.GetPath()), paths=paths, covered=covered)

@@ -26,6 +26,9 @@ What changed for Maya:
   - USD SCENE NODES lists that stage's materials, lights, cameras and textures.
   - **Tools ▸ Assign material to selected USD prims** binds the current tab;
     the same item is on a material's right-click menu in MATERIAL GRAPHS.
+    As in Maya, assigning to a group reaches everything under it: if geometry
+    below has its own binding (models imported from Maya do), the group's
+    binding is made `strongerThanDescendants`.
     Material sync, *Select bound prims*, light / camera / transform links and
     the conversion dialog work as in MoonLab.
   - Edits go to the stage's edit target (Maya's Layer Editor) and into Maya's
@@ -48,5 +51,8 @@ Tests, run inside Maya from `building/macOSMaya`:
 - `M3_SCRIPT=material-editor-usd-test.py HDMOONRAY_RDLA_OUTPUT=<file>.rdla bash m3-render-test.sh`
   checks binding, Maya undo, sync, selection and the Hydra Moonray result.
 - `M3_SCRIPT=material-editor-live-test.py bash m3-render-test.sh` assigns a
-  material from the right-click menu while Hydra Moonray renders and checks
-  that the viewport picks it up.
+  material to an Xform from the right-click menu while Hydra Moonray renders;
+  the sphere inside has its own material. Checks the viewport turns red.
+- Material not showing? In Maya's Script Editor (Python):
+  `from moonray_maya import diagnose; diagnose.materials()` prints what each
+  piece of geometry under the selection resolves to, and why.

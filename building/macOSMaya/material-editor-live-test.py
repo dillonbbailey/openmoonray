@@ -3,11 +3,13 @@
 """Assign a Material Editor material while Hydra Moonray renders, run inside
 Maya by m3-render-test.sh (M3_SCRIPT=material-editor-live-test.py).
 
-Loads testdata/lights/sphere.usda as a mayaUsd stage, switches the persp panel
-to Hydra Moonray and lets it render, then selects /ball and assigns a bright
-red material from the material graphs list's right-click menu. Checks that the
-binding is authored, that the delegate syncs the new material and /ball
-(hdm.log), and that the viewport image changes. Writes
+Loads testdata/materials/grouped.usda as a mayaUsd stage, switches the persp
+panel to Hydra Moonray and lets it render, then selects the Xform /statue and
+assigns a bright red material from the material graphs list's right-click menu.
+The sphere inside already has its own material, as models imported from Maya
+do; assigning to the group must still reach it. Checks that the sphere resolves
+to the new material, that the delegate syncs it (hdm.log), and that the
+viewport turns red. Writes
 $M3_OUT/editor-live.log, before.png / after.png and editor-live-result.txt.
 """
 import os
@@ -20,7 +22,9 @@ OUT = os.environ["M3_OUT"]
 HDM_LOG = os.environ.get("HDM_LOG_FILE", os.path.join(OUT, "hdm.log"))
 USD_FILE = os.environ.get("EDITOR_USD_FILE") or os.path.join(
     os.environ.get("M3_SCRIPTS_DIR", "/Users/dillonb/DEV/moonray_maya/openmoonray/building/macOSMaya"),
-    "testdata", "lights", "sphere.usda")
+    "testdata", "materials", "grouped.usda")
+SELECT = os.environ.get("EDITOR_SELECT", "/statue")
+GEOMETRY = os.environ.get("EDITOR_GEOMETRY", "/statue/body")
 OVERRIDE = "mayaHydraRenderOverride_HdMoonrayRendererPlugin"
 MENU_TEXT = "Assign material to selected USD prims"
 
@@ -70,9 +74,9 @@ def stage():
     return mayaUsd.ufe.getStage(state["proxy"])
 
 
-def ball_material():
+def geometry_material():
     from pxr import UsdShade
-    material, _ = UsdShade.MaterialBindingAPI(stage().GetPrimAtPath("/ball")).ComputeBoundMaterial()
+    material, _ = UsdShade.MaterialBindingAPI(stage().GetPrimAtPath(GEOMETRY)).ComputeBoundMaterial()
     return material
 
 
@@ -116,13 +120,13 @@ def setup():
 def step_editor():
     state["before"] = capture("before")
     state["log_mark"] = len(hdm_log())
-    cmds.select(state["proxy"] + ",/ball", replace=True)
+    cmds.select(state["proxy"] + "," + SELECT, replace=True)
     from moonray_material_editor import maya_host
     editor = state["editor"] = maya_host.show()
     editor.usd_viewer.event_received.connect(lambda e: state["events"].append((e["event"], e.get("message"))))
     bridge = editor.usd_viewer
-    wait(lambda: bridge.ready and bridge.selected_prim_paths == ["/ball"], step_assign,
-         "editor follows Maya selection (stage + /ball)")
+    wait(lambda: bridge.ready and bridge.selected_prim_paths == [SELECT], step_assign,
+         f"editor follows Maya selection (stage + {SELECT})")
 
 
 def step_assign():
@@ -139,16 +143,19 @@ def step_assign():
     menu = editor.material_graph_menu()
     action = next((a for a in menu.actions() if a.text() == MENU_TEXT), None)
     check(action is not None, "material graph right-click menu has the assign item")
-    check(bool(action and action.isEnabled()), "assign item is enabled with /ball selected")
+    check(bool(action and action.isEnabled()), f"assign item is enabled with {SELECT} selected")
     if action:
         action.trigger()
     menu.deleteLater()
-    wait(lambda: any(e == "material_bound" for e, _ in state["events"]) and ball_material(), step_bound,
-         "material bound to /ball")
+    wait(lambda: any(e == "material_bound" for e, _ in state["events"]), step_bound,
+         f"material bound to {SELECT}")
 
 
 def step_bound():
-    state["material"] = str(ball_material().GetPath())
+    material = geometry_material()
+    state["material"] = str(material.GetPath()) if material else ""
+    check(state["material"].startswith("/ShaderGraphMaterials/"),
+          f"{GEOMETRY} resolves to the assigned material ({state['material']})")
     say(f"bound {state['material']}; events {state['events']}")
     QtCore.QTimer.singleShot(12000, step_check)
 
@@ -159,7 +166,7 @@ def step_check():
     syncs = [line for line in text.splitlines() if line.startswith("SyncStart")]
     say("delegate syncs after assigning:\n  " + "\n  ".join(syncs[:40]))
     check(any(state["material"] in line for line in syncs), "delegate synced the new material")
-    check(any("/ball" in line for line in syncs), "delegate re-synced /ball")
+    check(any(GEOMETRY in line for line in syncs), f"delegate re-synced {GEOMETRY}")
     try:
         import numpy as np
         from PySide6.QtGui import QImage
