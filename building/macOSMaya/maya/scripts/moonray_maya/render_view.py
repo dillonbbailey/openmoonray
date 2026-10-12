@@ -6,7 +6,8 @@ mayaHydra registers each Hydra renderer as a Maya renderer, but its render
 procedure (hydraRender) only writes an image file: Render > Render Current
 Frame renders, yet Render View stays empty. This render procedure renders the
 frame into the project's images/tmp folder - where Maya Software puts Render
-View frames - and loads it into Render View. Resolution and camera come from
+View frames - and loads it into Render View; while it renders, the
+moonrayRenderView plug-in shows MoonRay's progressive images there. Resolution and camera come from
 Render View / Render Settings; MoonRay settings from the MoonRay tab.
 
 hydraRender always renders through mayaHydra's USD render settings: by default
@@ -82,6 +83,21 @@ def _restore(undo):
             attr.Clear()
 
 
+def _begin_progressive(width, height):
+    """Show MoonRay's images in Render View while hydraRender runs.
+
+    hydraRender blocks Maya until the frame converges; the moonrayRenderView
+    plug-in (maya/plugin) updates Render View from inside that loop through
+    hdMoonray's frame hook. Without it the frame appears when it is done."""
+    try:
+        if not cmds.pluginInfo("moonrayRenderView", query=True, loaded=True):
+            cmds.loadPlugin("moonrayRenderView", quiet=True)
+        return bool(cmds.moonrayRenderView(begin=True, width=int(width), height=int(height)))
+    except Exception as exc:
+        cmds.warning(f"Hydra Moonray: no progressive display ({exc})")
+        return False
+
+
 def _camera_transform(camera):
     """Render View passes the camera's transform or shape; products want |transform."""
     node = (cmds.ls(camera or "persp", long=True) or ["|persp"])[0]
@@ -90,8 +106,11 @@ def _camera_transform(camera):
     return node
 
 
-def render(width, height, camera):
-    """Render procedure: one MoonRay frame into Render View."""
+def render(width, height, camera, load_final=True):
+    """Render procedure: one MoonRay frame into Render View.
+
+    load_final=False leaves Render View showing the last progressive image
+    (tests compare it with the final one)."""
     render_settings.ensure_globals()
     camera_path = _camera_transform(camera)
     name = "moonray_" + camera_path.split("|")[-1].replace(":", "_")
@@ -100,18 +119,20 @@ def render(width, height, camera):
         os.remove(image)
     _ensure_render_settings()
     undo = _setup_frame(image, width, height, camera_path)
+    progressive = _begin_progressive(width, height)
     started = time.time()
     try:
         cmds.hydraRender(renderer=RENDERER, width=int(width), height=int(height), camera=camera_path)
     finally:
+        updates = cmds.moonrayRenderView(finish=True) if progressive else 0
         _restore(undo)
     elapsed = time.time() - started
     if not os.path.exists(image):
         cmds.warning(f"Hydra Moonray: no image was written to {image}")
         return ""
-    if cmds.renderWindowEditor(RENDER_VIEW, exists=True):
+    if load_final and cmds.renderWindowEditor(RENDER_VIEW, exists=True):
         cmds.renderWindowEditor(RENDER_VIEW, edit=True, loadImage=image)
         cmds.renderWindowEditor(RENDER_VIEW, edit=True, pcaption=(
             f"MoonRay  {int(width)}x{int(height)}  {camera_path.split('|')[-1]}  {elapsed:.1f}s"))
-    print(f"Hydra Moonray: rendered {image} in {elapsed:.1f}s")
+    print(f"Hydra Moonray: rendered {image} in {elapsed:.1f}s ({updates} progressive updates)")
     return image

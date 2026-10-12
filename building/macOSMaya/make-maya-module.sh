@@ -81,7 +81,9 @@ EOF
 done
 
 # Python for Maya, used from the source tree: the MoonRay menu (userSetup.py)
-# and the Material Editor (maya/material_editor).
+# and the Material Editor (maya/material_editor). Maya plug-ins from
+# build-maya-plugin.sh; HDMOONRAY_LIBRARY lets moonrayRenderView find the
+# delegate's library for its progressive-image hook.
 maya_src="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/maya"
 
 # Runtime environment for the delegate and the Arras execComp child, which
@@ -97,6 +99,8 @@ REZ_MOONRAY_ROOT = $INSTALL_DIR
 PATH += $INSTALL_DIR/bin
 PYTHONPATH += $maya_src/scripts
 PYTHONPATH += $maya_src/material_editor
+MAYA_PLUG_IN_PATH += $MAYA_LOCAL_ROOT/plug-ins
+HDMOONRAY_LIBRARY = $install/lib/libhydramoonray.dylib
 EOF
 
 echo "Maya module ready: $module"
