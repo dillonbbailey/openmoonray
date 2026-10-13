@@ -448,12 +448,32 @@ class MayaStageBridge(QObject):
 
     def bind_material(self, data):
         binding = self.editing.bind_material(data["paths"] if "paths" in data else data["path"],
-                                             data["graph"], data.get("base_dir", str(EDITOR_ROOT)))
+                                             data["graph"], data.get("base_dir", str(EDITOR_ROOT)),
+                                             data.get("cover", True))
+        self._report_binding(binding)
         self._emit("material_bound", **binding)
 
     def bind_scene_material(self, data):
-        binding = self.editing.bind_scene_material(data["material"], data["paths"])
+        binding = self.editing.bind_scene_material(data["material"], data["paths"], data.get("cover", True))
         self._emit("scene_material_applied", **binding)
+        self._report_binding(binding)
+
+    def _report_binding(self, binding):
+        """Say what "Override materials below" did, or that it was off."""
+        name = binding["material"].rsplit("/", 1)[-1]
+
+        def prims(count):
+            return f"{count} prim" + ("" if count == 1 else "s")
+        if binding.get("covered"):
+            message = f"{name}: overrides the own materials of {prims(binding['covered'])} below"
+        elif binding.get("kept"):
+            message = (f"{name}: {prims(binding['kept'])} below "
+                       + ("keeps its" if binding["kept"] == 1 else "keep their") +
+                       " own material (Tools > Override materials below is off)")
+        else:
+            return
+        self.window.statusBar().showMessage(message, 15000)
+        self.log.message_logged.emit(message)
 
     def select_bound_prims(self, data):
         from .usd_material_bindings import bound_prim_paths

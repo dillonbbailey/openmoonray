@@ -71,7 +71,8 @@ class SceneMaterialLibrary(QObject):
         if self.available():
             if viewer.selection_timer.isActive():
                 viewer.select_items()
-            viewer.edit_command("bind_scene_material", material=material, paths=list(viewer.selected_prim_paths))
+            viewer.edit_command("bind_scene_material", material=material, paths=list(viewer.selected_prim_paths),
+                                cover=self.window.override_descendants_action.isChecked())
 
     def material_menu(self, data):
         menu = QMenu(self.window.scene_library)
@@ -85,6 +86,7 @@ class SceneMaterialLibrary(QObject):
             apply = menu.addAction("Apply to selected prims", lambda: self.apply_to_selected(material))
             apply.setEnabled(self.available() and bool(self.window.usd_viewer.selected_prim_paths))
             apply.setToolTip("Bind this existing material in the active USD edit layer. The entire selection is one Undo step.")
+            menu.addAction(self.window.override_descendants_action)
             menu.addSeparator()
         menu.addAction("Review MoonRay conversion…", lambda: self.window.material_conversion.open(material))
         if not data.get("conversion"):

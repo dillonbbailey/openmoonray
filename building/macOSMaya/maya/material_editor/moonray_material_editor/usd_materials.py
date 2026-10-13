@@ -82,40 +82,51 @@ def _material_users_below(prim):
             yield child
 
 
-def cover_descendants(prim, material):
+COVER_PURPOSES = (UsdShade.Tokens.allPurpose, UsdShade.Tokens.full)
+
+
+def kept_below(prim, material):
+    """Geometry under prim that resolves to another material than prim's."""
+    if prim.IsA(UsdGeom.Gprim) or prim.IsA(UsdGeom.Subset):
+        return []
+    path = material.GetPath()
+    return [child for child in _material_users_below(prim)
+            if any(UsdShade.MaterialBindingAPI(child).ComputeBoundMaterial(purpose)[0].GetPath() != path
+                   for purpose in COVER_PURPOSES)]
+
+
+def cover_descendants(prim, material, cover=True):
     """Maya: assigning to a group assigns to everything under it. In USD a
     descendant's own binding beats an inherited one (a mesh imported with its
     material keeps it), so when one would, make prim's bindings
-    strongerThanDescendants. Returns how many descendants that took over."""
-    if prim.IsA(UsdGeom.Gprim) or prim.IsA(UsdGeom.Subset):
-        return 0
-    path = material.GetPath()
-    purposes = (UsdShade.Tokens.allPurpose, UsdShade.Tokens.full)
-
-    def overridden():
-        return [child for child in _material_users_below(prim)
-                if any(UsdShade.MaterialBindingAPI(child).ComputeBoundMaterial(purpose)[0].GetPath() != path
-                       for purpose in purposes)]
-    taken = len(overridden())
-    if not taken:
-        return 0
+    strongerThanDescendants. With cover=False (the editor's "Override
+    materials below" option off) they keep USD's default strength.
+    Returns (descendants taken over, descendants keeping their own)."""
+    taken = len(kept_below(prim, material))
+    if not taken or not cover:
+        return 0, taken
     api = UsdShade.MaterialBindingAPI(prim)
     # Both purposes, so a descendant's full-purpose binding is covered too.
-    for purpose in purposes:
+    for purpose in COVER_PURPOSES:
         if not api.Bind(material, bindingStrength=UsdShade.Tokens.strongerThanDescendants, materialPurpose=purpose):
             raise ValueError("USD could not bind the material to " + str(prim.GetPath()))
-    left = overridden()
+    left = kept_below(prim, material)
     if left:
         raise ValueError(str(left[0].GetPath()) + " keeps its own material (a stronger binding below " +
                          str(prim.GetPath()) + "). No assignments were applied; assign to it directly.")
-    return taken
+    return taken, 0
 
 
-def bind_graph_material(stage, prim, data, base_dir):
-    return bind_graph_materials(stage, [prim], data, base_dir)
+def cover_all(prims, material, cover):
+    counts = [cover_descendants(prim, material, cover) for prim in prims]
+    return sum(c for c, _ in counts), sum(k for _, k in counts)
 
 
-def bind_graph_materials(stage, prims, data, base_dir):
+def bind_graph_material(stage, prim, data, base_dir, cover=True):
+    return bind_graph_materials(stage, [prim], data, base_dir, cover)
+
+
+def bind_graph_materials(stage, prims, data, base_dir, cover=True):
     if not prims or any(not can_bind_material(prim) for prim in prims):
         raise ValueError("Select geometry, a transform/scope, or a face GeomSubset on a mesh to bind a material.")
     graph = material_graph(data, base_dir)
@@ -148,7 +159,7 @@ def bind_graph_materials(stage, prims, data, base_dir):
         if full and full.HasAuthoredTargets():
             if not api.Bind(material, materialPurpose=UsdShade.Tokens.full):
                 raise ValueError("USD could not bind the full material to " + str(prim.GetPath()))
-    covered = sum(cover_descendants(prim, material) for prim in prims)
+    covered, kept = cover_all(prims, material, cover)
     # Resolve after every assignment so selected ancestors/descendants work in
     # any selection order. StageEdits rolls back the entire batch on failure.
     for prim in prims:
@@ -157,4 +168,4 @@ def bind_graph_materials(stage, prims, data, base_dir):
             raise ValueError("An ancestor or collection binding takes precedence on " + str(prim.GetPath()) +
                              ". No assignments were applied; adjust that binding before assigning here.")
     paths = [str(prim.GetPath()) for prim in prims]
-    return dict(path=paths[0], paths=paths, material=str(material_path), name=graph.data["name"], covered=covered)
+    return dict(path=paths[0], paths=paths, material=str(material_path), name=graph.data["name"], covered=covered, kept=kept)

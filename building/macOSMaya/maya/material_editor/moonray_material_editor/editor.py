@@ -53,6 +53,7 @@ from .render_region import validate_region
 from .material_preview import PreviewLabel, PreviewPanel
 from .model import CACHE_ROOT, EDITOR_ROOT, Graph, GraphError, LIGHT_SAMPLING, LOCAL_ROOT, LOBE_SAMPLES, RAY_DEPTHS, TERMINALS, VECTOR_TYPES, editable, starter_graph
 from .maya_stage import MayaStageBridge
+from . import recent_scenes
 from .recent_scenes import RecentScenes
 from .texture_previews import TexturePreviews, TexturePreviewLabel, texture_fields
 from .tx_controller import TextureConversions, TextureConversionStatus
@@ -60,6 +61,9 @@ from .tx_cache import texture_attribute
 from .geometry_settings import TESSELLATION_MAX, TESSELLATION_HELP, ADAPTIVE_HELP
 from .usd_render_config import SCENE_PREFIX, setting_specs
 from .themes import GROUP_LAYOUT, polish_tree, set_label_indent, set_layout_spacing, set_local_style
+
+# Maya: Tools > Override materials below.
+OVERRIDE_DESCENDANTS_KEY = "assign/override_descendants"
 
 LIBRARY_CATEGORIES = ("Material", "Map", "NormalMap", "Displacement", "Volume", "Light", "LightFilter",
                       "DisplayFilter", "RenderOutput", "Camera", "Geometry", "LightSet", "LightFilterSet",
@@ -815,6 +819,16 @@ class MaterialEditor(QMainWindow):
         self.assign_material_action = self._menu_action(tools_menu, "Assign material to selected USD prims",
             lambda: self.bind_graph_to_usd(list(self.usd_viewer.selected_prim_paths)))
         self.assign_material_action.setToolTip("Bind this tab's material to the USD prims selected in Maya, in the stage's edit target. Maya's Undo reverts it.")
+        # Maya: assigning to a group covers everything under it. Off, USD's
+        # default applies: geometry with its own binding keeps its material.
+        override = self.override_descendants_action = QAction("Override materials below", self)
+        override.setCheckable(True)
+        override.setChecked(recent_scenes.settings_store().value(OVERRIDE_DESCENDANTS_KEY, True, type=bool))
+        override.toggled.connect(lambda on: recent_scenes.settings_store().setValue(OVERRIDE_DESCENDANTS_KEY, on))
+        override.setToolTip("Assigning to an Xform or scope also replaces materials bound on the geometry under it "
+                            "(binding strength strongerThanDescendants), as assigning to a group does in Maya.\n"
+                            "Off: geometry with its own material keeps it (USD's default).")
+        tools_menu.addAction(override)
         tools_menu.addAction(self.usd_viewer.sync_materials)
         self.usd_viewer.sync_materials.setText("Sync materials to USD")
         self.usd_viewer.sync_materials.setToolTip("Write graph edits to the USD materials they are linked to, as you edit.")
@@ -1073,6 +1087,7 @@ class MaterialEditor(QMainWindow):
             assign.setEnabled(bool(paths) and bindable and self.usd_viewer.ready)
             assign.setToolTip("Bind this material to the USD prims selected in Maya, in the stage's edit target. Maya's Undo reverts it."
                               if bindable else "Connect a surface or volume output before binding.")
+            menu.addAction(self.override_descendants_action)
             menu.addSeparator()
             menu.addAction("Delete",lambda: self.delete_graph(next((i for i, doc in enumerate(self.documents) if doc.id == identifier), -1)))
         return menu
@@ -1137,7 +1152,8 @@ class MaterialEditor(QMainWindow):
             self.usd_viewer.show_error("Select USD prims in Maya to assign the material to.")
             return
         self.usd_viewer.edit_command("bind_material", paths=paths, graph=doc.graph.data,
-                                     base_dir=str(doc.path.parent if doc.path else EDITOR_ROOT))
+                                     base_dir=str(doc.path.parent if doc.path else EDITOR_ROOT),
+                                     cover=self.override_descendants_action.isChecked())
 
     def update_title(self, *args):
         for index, doc in enumerate(self.documents):

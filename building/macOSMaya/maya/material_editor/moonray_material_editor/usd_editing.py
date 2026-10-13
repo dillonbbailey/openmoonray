@@ -618,7 +618,7 @@ class StageEdits:
             return str(prim.GetPath())
         return self.change("Apply " + schema + (":" + instance if instance else ""), apply)
 
-    def bind_material(self, path, graph, base_dir):
+    def bind_material(self, path, graph, base_dir, cover=True):
         from .usd_materials import bind_graph_materials, can_bind_material
         paths = list(dict.fromkeys([path] if isinstance(path, str) else path))
         if not paths:
@@ -627,11 +627,11 @@ class StageEdits:
         for value, prim in zip(paths, prims):
             if not editable_prim(prim) or not can_bind_material(prim):
                 raise ValueError("Cannot bind a material to " + value + ". Select editable geometry, transforms/scopes or mesh face subsets.")
-        return self.change("Bind material from shader graph", lambda: bind_graph_materials(self.stage, prims, graph, base_dir))
+        return self.change("Bind material from shader graph", lambda: bind_graph_materials(self.stage, prims, graph, base_dir, cover))
 
-    def bind_scene_material(self, material, paths):
+    def bind_scene_material(self, material, paths, cover=True):
         from .usd_material_bindings import bind_existing_material
-        return self.change("Apply scene material", lambda: bind_existing_material(self.stage, material, paths))
+        return self.change("Apply scene material", lambda: bind_existing_material(self.stage, material, paths, cover))
 
     def apply_light_graph(self, data, frame=0):
         from .usd_light_graph import apply_light_graph

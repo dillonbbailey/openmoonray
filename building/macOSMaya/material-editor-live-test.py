@@ -7,7 +7,8 @@ Loads testdata/materials/grouped.usda as a mayaUsd stage, switches the persp
 panel to Hydra Moonray and lets it render, then selects the Xform /statue and
 assigns a bright red material from the material graphs list's right-click menu.
 The sphere inside already has its own material, as models imported from Maya
-do; assigning to the group must still reach it. Checks that the sphere resolves
+do. With Override materials below off it keeps it; with it on (the default),
+assigning to the group reaches it. Checks that the sphere resolves
 to the new material, that the delegate syncs it (hdm.log), and that the
 viewport turns red. Writes
 $M3_OUT/editor-live.log, before.png / after.png and editor-live-result.txt.
@@ -129,34 +130,64 @@ def step_editor():
          f"editor follows Maya selection (stage + {SELECT})")
 
 
-def step_assign():
+def set_override(on):
+    # Signals blocked: the editor would save the choice in the user's settings.
+    action = state["editor"].override_descendants_action
+    with QtCore.QSignalBlocker(action):
+        action.setChecked(on)
+
+
+def assign_from_menu(then):
     editor = state["editor"]
-    editor.new_graph()
-    doc = editor.document
-    node = next(n for n in doc.graph.data["nodes"] if n["shader"] == "DwaBaseMaterial")
-    node["values"]["albedo"] = [1.0, 0.0, 0.0]
-    editor.update_material_graphs()
     listing = editor.material_graphs
     row = next(i for i in range(listing.count())
-               if listing.item(i).data(QtCore.Qt.ItemDataRole.UserRole) == doc.id)
+               if listing.item(i).data(QtCore.Qt.ItemDataRole.UserRole) == state["doc"].id)
     listing.setCurrentRow(row)
     menu = editor.material_graph_menu()
     action = next((a for a in menu.actions() if a.text() == MENU_TEXT), None)
+    override = next((a for a in menu.actions() if a.text() == "Override materials below"), None)
     check(action is not None, "material graph right-click menu has the assign item")
+    check(bool(override and override.isCheckable()), "right-click menu has the Override materials below option")
     check(bool(action and action.isEnabled()), f"assign item is enabled with {SELECT} selected")
+    bound = sum(e == "material_bound" for e, _ in state["events"])
     if action:
         action.trigger()
     menu.deleteLater()
-    wait(lambda: any(e == "material_bound" for e, _ in state["events"]), step_bound,
+    wait(lambda: sum(e == "material_bound" for e, _ in state["events"]) > bound, then,
          f"material bound to {SELECT}")
+
+
+def step_assign():
+    editor = state["editor"]
+    state["override_was"] = editor.override_descendants_action.isChecked()
+    editor.new_graph()
+    doc = state["doc"] = editor.document
+    node = next(n for n in doc.graph.data["nodes"] if n["shader"] == "DwaBaseMaterial")
+    node["values"]["albedo"] = [1.0, 0.0, 0.0]
+    editor.update_material_graphs()
+    set_override(False)
+    say("Override materials below: off")
+    assign_from_menu(step_kept)
+
+
+def step_kept():
+    material = geometry_material()
+    path = str(material.GetPath()) if material else ""
+    check(path == "/Looks/Stone", f"option off: {GEOMETRY} keeps its own material ({path})")
+    message = state["editor"].statusBar().currentMessage()
+    check("own material (Tools > Override materials below is off)" in message, f"option off: status bar says so ({message!r})")
+    set_override(True)
+    say("Override materials below: on")
+    assign_from_menu(step_bound)
 
 
 def step_bound():
     material = geometry_material()
     state["material"] = str(material.GetPath()) if material else ""
     check(state["material"].startswith("/ShaderGraphMaterials/"),
-          f"{GEOMETRY} resolves to the assigned material ({state['material']})")
-    say(f"bound {state['material']}; events {state['events']}")
+          f"option on: {GEOMETRY} resolves to the assigned material ({state['material']})")
+    message = state["editor"].statusBar().currentMessage()
+    check("overrides the own materials" in message, f"option on: status bar says so ({message!r})")
     QtCore.QTimer.singleShot(12000, step_check)
 
 
@@ -189,6 +220,8 @@ def finish():
     if state.get("finished"):
         return
     state["finished"] = True
+    if "override_was" in state:
+        set_override(state["override_was"])
     say(f"editor events: {state['events']}")
     if state.get("editor"):
         say(f"editor status bar: {state['editor'].statusBar().currentMessage()!r}")
